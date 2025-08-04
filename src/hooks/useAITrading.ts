@@ -11,6 +11,7 @@ export const useAITrading = () => {
   const [aiSystem, setAISystem] = useState<AITradingSystem | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState<string>('');
   const [currentPrediction, setCurrentPrediction] = useState<{
     price: number;
     confidence: number;
@@ -65,25 +66,30 @@ export const useAITrading = () => {
       
       // If loading failed, train new models
       console.log('📊 Step 2: Collecting historical data for training...');
+      setTrainingProgress('📊 Collecting market data...');
       const rawData = await collectHistoricalData();
       console.log(`📊 Collected ${rawData.length} raw data points`);
       
       console.log('🔧 Step 3: Preprocessing data...');
+      setTrainingProgress('🔧 Processing market data...');
       const processedData = preprocessData(rawData);
       console.log(`🔧 Preprocessed ${processedData.length} data points`);
       
       console.log('⚙️ Step 4: Processing market features...');
+      setTrainingProgress('⚙️ Generating AI features...');
       const features = processMarketData(processedData);
       console.log(`⚙️ Generated ${features.length} feature sets`);
       
       setHistoricalData(features);
       
       console.log('🤖 Step 5: Training new AI models...');
-      await system.initialize(features);
+      setTrainingProgress('🤖 Training LSTM model (5 epochs)...');
+      await system.initialize(features, true); // Use quick mode for faster training
       
       setAISystem(system);
       setIsInitialized(true);
       setLastUpdate(new Date());
+      setTrainingProgress('');
       
       console.log('✅ AI Trading System trained and initialized successfully!');
       
@@ -132,7 +138,7 @@ export const useAITrading = () => {
       
       console.log('🤖 Training new AI models...');
       const system = new AITradingSystem();
-      await system.initialize(features);
+      await system.initialize(features, true); // Use quick mode for faster training
       
       setAISystem(system);
       setIsInitialized(true);
@@ -235,6 +241,7 @@ export const useAITrading = () => {
   return {
     isInitialized,
     isTraining,
+    trainingProgress,
     currentPrediction,
     currentSignal,
     lastUpdate,

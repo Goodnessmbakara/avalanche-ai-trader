@@ -209,8 +209,8 @@ export class LSTMPredictor {
   /**
    * Train the LSTM model
    */
-  async train(features: ProcessedFeatures[]): Promise<void> {
-    console.log('Training LSTM model...');
+  async train(features: ProcessedFeatures[], quickMode: boolean = false): Promise<void> {
+    console.log(`Training LSTM model${quickMode ? ' (quick mode)' : ''}...`);
     
     const { sequences, targets } = this.prepareSequences(features);
     const normalizedFeatures = this.normalizeFeatures(features);
@@ -227,15 +227,16 @@ export class LSTMPredictor {
     // Create model
     this.model = this.createModel([60, 11]);
 
-    // Train model
+    // Train model with reduced epochs for faster training
+    const epochs = quickMode ? 5 : 20; // Even faster in quick mode
     await this.model.fit(xs, ys, {
-      epochs: 100,
+      epochs: epochs,
       batchSize: 32,
       validationSplit: 0.2,
       callbacks: {
         onEpochEnd: (epoch, logs) => {
-          if (epoch % 10 === 0) {
-            console.log(`Epoch ${epoch}: loss = ${logs?.loss?.toFixed(4)}`);
+          if (epoch % (quickMode ? 1 : 5) === 0) { // Show progress every epoch in quick mode
+            console.log(`LSTM Epoch ${epoch}/${epochs}: loss = ${logs?.loss?.toFixed(4)}`);
           }
         },
       },
@@ -426,18 +427,24 @@ export class QLearningAgent {
    */
   train(
     historicalData: ProcessedFeatures[],
-    episodes: number = 10000
+    episodes: number = 500, // Reduced from 10000 to 500 for faster training
+    quickMode: boolean = false
   ): void {
-    console.log('Training Q-Learning agent...');
+    const actualEpisodes = quickMode ? 100 : episodes; // Even fewer episodes in quick mode
+    console.log(`Training Q-Learning agent with ${actualEpisodes} episodes${quickMode ? ' (quick mode)' : ''}...`);
 
-    for (let episode = 0; episode < episodes; episode++) {
+    for (let episode = 0; episode < actualEpisodes; episode++) {
       let portfolioValue = 10000; // Starting portfolio value
       let avaxHoldings = 0;
       let usdtHoldings = 10000;
 
-      for (let i = 1; i < historicalData.length; i++) {
-        const currentFeatures = historicalData[i - 1];
-        const nextFeatures = historicalData[i];
+      // Use a subset of data for faster training
+      const maxDataPoints = quickMode ? 50 : 100; // Even less data in quick mode
+      const trainingData = historicalData.slice(0, Math.min(historicalData.length, maxDataPoints));
+      
+      for (let i = 1; i < trainingData.length; i++) {
+        const currentFeatures = trainingData[i - 1];
+        const nextFeatures = trainingData[i];
         
         const portfolioRatio = (avaxHoldings * currentFeatures.price) / portfolioValue;
         const state = this.getState(currentFeatures, portfolioRatio);
@@ -470,8 +477,9 @@ export class QLearningAgent {
         this.updateQValue(state, action, reward, nextState);
       }
 
-      if (episode % 1000 === 0) {
-        console.log(`Episode ${episode} completed`);
+      const progressInterval = quickMode ? 25 : 100; // Show progress more frequently in quick mode
+      if (episode % progressInterval === 0) {
+        console.log(`Q-Learning Episode ${episode}/${actualEpisodes} completed`);
       }
     }
 
@@ -522,18 +530,29 @@ export class AITradingSystem {
   private lstmPredictor = new LSTMPredictor();
   private rlAgent = new QLearningAgent();
 
-  async initialize(historicalData: ProcessedFeatures[]): Promise<void> {
-    console.log('Initializing AI Trading System...');
+  async initialize(historicalData: ProcessedFeatures[], quickMode: boolean = false): Promise<void> {
+    console.log(`Initializing AI Trading System${quickMode ? ' (quick mode)' : ''}...`);
     
-    // Train models
-    await this.lstmPredictor.train(historicalData);
-    this.rlAgent.train(historicalData);
+    // Add timeout to prevent infinite training
+    const timeoutMs = quickMode ? 30000 : 60000; // 30s timeout for quick mode, 60s for normal
+    const trainingTimeout = setTimeout(() => {
+      console.warn('Training timeout reached, using basic models');
+      throw new Error('Training timeout - using basic models');
+    }, timeoutMs);
+    
+    try {
+      // Train models
+      await this.lstmPredictor.train(historicalData, quickMode);
+      this.rlAgent.train(historicalData, undefined, quickMode);
 
-    // Save models
-    await this.lstmPredictor.saveModel('lstm_model');
-    this.rlAgent.saveModel();
+      // Save models
+      await this.lstmPredictor.saveModel('lstm_model');
+      this.rlAgent.saveModel();
 
-    console.log('AI Trading System initialized');
+      console.log('AI Trading System initialized');
+    } finally {
+      clearTimeout(trainingTimeout);
+    }
   }
 
   async loadModels(): Promise<void> {

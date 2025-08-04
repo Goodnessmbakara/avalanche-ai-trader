@@ -20,6 +20,7 @@ const TradingDashboard: React.FC = () => {
   const {
     isInitialized,
     isTraining,
+    trainingProgress,
     initializationError,
     historicalDataLength,
     initializeAI,
@@ -191,7 +192,7 @@ const TradingDashboard: React.FC = () => {
               }`}
             >
               {isTraining
-                ? "Training..."
+                ? trainingProgress || "Training..."
                 : isInitialized
                 ? "Ready"
                 : "Initializing..."}
