@@ -1,14 +1,12 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import TradingDashboard from '../components/TradingDashboard';
 
+/**
+ * Main Index Page for AI-Powered Trading System
+ * University of Uyo Final Year Project
+ * AVAX/USDT Token Prediction and Automated Trading on Pangolin DEX
+ */
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  return <TradingDashboard />;
 };
 
 export default Index;
