@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,8 +9,8 @@ import {
   Tooltip,
   Legend,
   Filler,
-} from 'chart.js';
-import { Line } from 'react-chartjs-2';
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 
 // Register Chart.js components
 ChartJS.register(
@@ -31,7 +31,7 @@ ChartJS.register(
  */
 const PriceChart: React.FC = () => {
   const [chartData, setChartData] = useState<any>(null);
-  const [timeframe, setTimeframe] = useState<'1H' | '4H' | '1D' | '1W'>('1D');
+  const [timeframe, setTimeframe] = useState<"1H" | "4H" | "1D" | "1W">("1D");
 
   // Mock data for demonstration - In production, this would come from API
   useEffect(() => {
@@ -48,21 +48,23 @@ const PriceChart: React.FC = () => {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
         labels.push(date.toLocaleDateString());
-        
+
         // Mock AVAX price around $40 with some volatility
         const basePrice = 40;
         const volatility = Math.sin(i * 0.1) * 5 + Math.random() * 3;
         const price = basePrice + volatility;
         prices.push(price);
-        
+
         // Simple moving averages
         if (i <= 22) {
-          const sma7Value = prices.slice(-7).reduce((a, b) => a + b, 0) / Math.min(7, prices.length);
+          const sma7Value =
+            prices.slice(-7).reduce((a, b) => a + b, 0) /
+            Math.min(7, prices.length);
           sma7.push(sma7Value);
         } else {
           sma7.push(null);
         }
-        
+
         if (i <= 0) {
           const sma30Value = prices.reduce((a, b) => a + b, 0) / prices.length;
           sma30.push(sma30Value);
@@ -82,39 +84,39 @@ const PriceChart: React.FC = () => {
         labels,
         datasets: [
           {
-            label: 'AVAX/USDT Price',
+            label: "AVAX/USDT Price",
             data: prices,
-            borderColor: 'hsl(var(--chart-primary))',
-            backgroundColor: 'hsl(var(--chart-primary) / 0.1)',
+            borderColor: "hsl(var(--chart-primary))",
+            backgroundColor: "hsl(var(--chart-primary) / 0.1)",
             borderWidth: 2,
             fill: true,
             tension: 0.1,
           },
           {
-            label: 'SMA 7',
+            label: "SMA 7",
             data: sma7,
-            borderColor: 'hsl(var(--chart-secondary))',
-            backgroundColor: 'transparent',
+            borderColor: "hsl(var(--chart-secondary))",
+            backgroundColor: "transparent",
             borderWidth: 1,
             pointRadius: 0,
           },
           {
-            label: 'SMA 30',
+            label: "SMA 30",
             data: sma30,
-            borderColor: 'hsl(var(--chart-tertiary))',
-            backgroundColor: 'transparent',
+            borderColor: "hsl(var(--chart-tertiary))",
+            backgroundColor: "transparent",
             borderWidth: 1,
             pointRadius: 0,
           },
           {
-            label: 'AI Prediction',
+            label: "AI Prediction",
             data: predictions,
-            borderColor: 'hsl(var(--warning))',
-            backgroundColor: 'hsl(var(--warning) / 0.2)',
+            borderColor: "hsl(var(--warning))",
+            backgroundColor: "hsl(var(--warning) / 0.2)",
             borderWidth: 2,
             borderDash: [5, 5],
             pointRadius: 3,
-            pointBackgroundColor: 'hsl(var(--warning))',
+            pointBackgroundColor: "hsl(var(--warning))",
           },
         ],
       };
@@ -128,9 +130,9 @@ const PriceChart: React.FC = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top' as const,
+        position: "top" as const,
         labels: {
-          color: 'hsl(var(--foreground))',
+          color: "hsl(var(--foreground))",
           font: {
             size: 12,
           },
@@ -140,41 +142,41 @@ const PriceChart: React.FC = () => {
         display: false,
       },
       tooltip: {
-        backgroundColor: 'hsl(var(--popover))',
-        titleColor: 'hsl(var(--popover-foreground))',
-        bodyColor: 'hsl(var(--popover-foreground))',
-        borderColor: 'hsl(var(--border))',
+        backgroundColor: "hsl(var(--popover))",
+        titleColor: "hsl(var(--popover-foreground))",
+        bodyColor: "hsl(var(--popover-foreground))",
+        borderColor: "hsl(var(--border))",
         borderWidth: 1,
       },
     },
     scales: {
       x: {
         grid: {
-          color: 'hsl(var(--chart-grid))',
+          color: "hsl(var(--chart-grid))",
         },
         ticks: {
-          color: 'hsl(var(--muted-foreground))',
+          color: "hsl(var(--muted-foreground))",
         },
       },
       y: {
         grid: {
-          color: 'hsl(var(--chart-grid))',
+          color: "hsl(var(--chart-grid))",
         },
         ticks: {
-          color: 'hsl(var(--muted-foreground))',
-          callback: function(value: any) {
-            return '$' + value.toFixed(2);
+          color: "hsl(var(--muted-foreground))",
+          callback: function (value: any) {
+            return "$" + value.toFixed(2);
           },
         },
       },
     },
     interaction: {
       intersect: false,
-      mode: 'index' as const,
+      mode: "index" as const,
     },
   };
 
-  const timeframeButtons = ['1H', '4H', '1D', '1W'] as const;
+  const timeframeButtons = ["1H", "4H", "1D", "1W"] as const;
 
   return (
     <div className="w-full">
@@ -186,8 +188,8 @@ const PriceChart: React.FC = () => {
             onClick={() => setTimeframe(tf)}
             className={`px-3 py-1 rounded text-sm font-medium transition-fast ${
               timeframe === tf
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-secondary text-secondary-foreground hover:bg-accent'
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground hover:bg-accent"
             }`}
           >
             {tf}
@@ -197,9 +199,7 @@ const PriceChart: React.FC = () => {
 
       {/* Chart Container */}
       <div className="h-80 w-full">
-        {chartData && (
-          <Line data={chartData} options={options} />
-        )}
+        {chartData && <Line data={chartData} options={options} />}
       </div>
 
       {/* Chart Legend/Info */}

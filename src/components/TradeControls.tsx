@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Trade Controls Component
@@ -14,27 +14,29 @@ import { useToast } from '@/hooks/use-toast';
  */
 const TradeControls: React.FC = () => {
   const [isAutoTrading, setIsAutoTrading] = useState(false);
-  const [tradeAmount, setTradeAmount] = useState('100');
+  const [tradeAmount, setTradeAmount] = useState("100");
   const [riskLevel, setRiskLevel] = useState([50]);
-  const [stopLoss, setStopLoss] = useState('5');
-  const [takeProfit, setTakeProfit] = useState('10');
+  const [stopLoss, setStopLoss] = useState("5");
+  const [takeProfit, setTakeProfit] = useState("10");
   const { toast } = useToast();
 
-  const handleManualTrade = (action: 'buy' | 'sell') => {
+  const handleManualTrade = (action: "buy" | "sell") => {
     // In production, this would interact with Web3 and smart contracts
     toast({
       title: `${action.toUpperCase()} Order Submitted`,
-      description: `${action === 'buy' ? 'Buying' : 'Selling'} $${tradeAmount} worth of AVAX`,
+      description: `${
+        action === "buy" ? "Buying" : "Selling"
+      } $${tradeAmount} worth of AVAX`,
     });
   };
 
   const toggleAutoTrading = () => {
     setIsAutoTrading(!isAutoTrading);
     toast({
-      title: `Auto Trading ${!isAutoTrading ? 'Enabled' : 'Disabled'}`,
-      description: !isAutoTrading 
-        ? 'AI will now execute trades based on predictions' 
-        : 'Manual trading mode activated',
+      title: `Auto Trading ${!isAutoTrading ? "Enabled" : "Disabled"}`,
+      description: !isAutoTrading
+        ? "AI will now execute trades based on predictions"
+        : "Manual trading mode activated",
     });
   };
 
@@ -61,9 +63,11 @@ const TradeControls: React.FC = () => {
       {/* Manual Trading Controls */}
       <div className="space-y-4">
         <Label className="text-base font-medium">Manual Trading</Label>
-        
+
         <div className="space-y-2">
-          <Label htmlFor="tradeAmount" className="text-sm">Trade Amount (USD)</Label>
+          <Label htmlFor="tradeAmount" className="text-sm">
+            Trade Amount (USD)
+          </Label>
           <Input
             id="tradeAmount"
             type="number"
@@ -76,14 +80,14 @@ const TradeControls: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-2">
           <Button
-            onClick={() => handleManualTrade('buy')}
+            onClick={() => handleManualTrade("buy")}
             disabled={isAutoTrading}
             className="bg-profit hover:bg-profit/90 text-success-foreground"
           >
             Buy AVAX
           </Button>
           <Button
-            onClick={() => handleManualTrade('sell')}
+            onClick={() => handleManualTrade("sell")}
             disabled={isAutoTrading}
             variant="destructive"
           >
@@ -95,7 +99,7 @@ const TradeControls: React.FC = () => {
       {/* Risk Management */}
       <div className="space-y-4 pt-4 border-t border-border">
         <Label className="text-base font-medium">Risk Management</Label>
-        
+
         <div className="space-y-2">
           <Label className="text-sm">Risk Level: {riskLevel[0]}%</Label>
           <Slider
@@ -113,7 +117,9 @@ const TradeControls: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="stopLoss" className="text-sm">Stop Loss (%)</Label>
+            <Label htmlFor="stopLoss" className="text-sm">
+              Stop Loss (%)
+            </Label>
             <Input
               id="stopLoss"
               type="number"
@@ -123,7 +129,9 @@ const TradeControls: React.FC = () => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="takeProfit" className="text-sm">Take Profit (%)</Label>
+            <Label htmlFor="takeProfit" className="text-sm">
+              Take Profit (%)
+            </Label>
             <Input
               id="takeProfit"
               type="number"

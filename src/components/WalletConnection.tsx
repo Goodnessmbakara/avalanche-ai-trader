@@ -1,9 +1,9 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useWeb3 } from '@/hooks/useWeb3';
-import { useToast } from '@/hooks/use-toast';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useWeb3 } from "@/hooks/useWeb3";
+import { useToast } from "@/hooks/use-toast";
 
 /**
  * Wallet Connection Component
@@ -22,22 +22,47 @@ const WalletConnection: React.FC = () => {
     switchNetwork,
     refreshBalances,
   } = useWeb3();
-  
+
   const { toast } = useToast();
 
   const handleConnect = async () => {
     try {
+      // Check if MetaMask is installed
+      if (typeof window.ethereum === "undefined") {
+        toast({
+          title: "MetaMask Not Found",
+          description:
+            "Please install MetaMask extension to connect your wallet.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await connectWallet();
+
       if (isConnected) {
         toast({
           title: "Wallet Connected",
           description: "Successfully connected to MetaMask",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Connection error:", error);
+
+      let errorMessage = "Failed to connect wallet. Please try again.";
+
+      if (error.code === 4001) {
+        errorMessage = "Connection rejected by user. Please try again.";
+      } else if (error.code === -32002) {
+        errorMessage = "Please check MetaMask for pending connection request.";
+      } else if (error.message?.includes("already pending")) {
+        errorMessage =
+          "Connection request already pending. Please check MetaMask.";
+      }
+
       toast({
         title: "Connection Failed",
-        description: "Failed to connect wallet. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -54,14 +79,25 @@ const WalletConnection: React.FC = () => {
       } else {
         toast({
           title: "Network Switch Failed",
-          description: "Failed to switch to Avalanche network",
+          description:
+            "Failed to switch to Avalanche network. Please try manually.",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Network switch error:", error);
+
+      let errorMessage = "Error switching network. Please try manually.";
+
+      if (error.code === 4001) {
+        errorMessage = "Network switch rejected by user.";
+      } else if (error.code === 4902) {
+        errorMessage = "Avalanche network not found. Adding to MetaMask...";
+      }
+
       toast({
         title: "Network Error",
-        description: "Error switching network. Please try manually.",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -81,7 +117,8 @@ const WalletConnection: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center text-muted-foreground">
-            Connect your MetaMask wallet to start AI-powered trading on Avalanche
+            Connect your MetaMask wallet to start AI-powered trading on
+            Avalanche
           </div>
           <Button
             onClick={handleConnect}
@@ -89,10 +126,11 @@ const WalletConnection: React.FC = () => {
             className="w-full bg-gradient-primary hover:opacity-90"
             size="lg"
           >
-            {isLoading ? 'Connecting...' : 'Connect MetaMask'}
+            {isLoading ? "Connecting..." : "Connect MetaMask"}
           </Button>
-          <div className="text-xs text-muted-foreground text-center">
-            Make sure you have MetaMask installed and unlocked
+          <div className="text-xs text-muted-foreground text-center space-y-1">
+            <div>Make sure you have MetaMask installed and unlocked</div>
+            <div>Click the button above to connect your wallet</div>
           </div>
         </CardContent>
       </Card>
@@ -104,11 +142,11 @@ const WalletConnection: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="text-card-foreground">Wallet Connected</span>
-          <Badge 
+          <Badge
             variant={isAvalancheNetwork ? "default" : "destructive"}
             className={isAvalancheNetwork ? "bg-profit" : ""}
           >
-            {isAvalancheNetwork ? 'Avalanche' : 'Wrong Network'}
+            {isAvalancheNetwork ? "Avalanche" : "Wrong Network"}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -118,7 +156,7 @@ const WalletConnection: React.FC = () => {
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Account</span>
             <span className="text-foreground font-mono">
-              {account ? formatAddress(account) : ''}
+              {account ? formatAddress(account) : ""}
             </span>
           </div>
         </div>
@@ -139,7 +177,7 @@ const WalletConnection: React.FC = () => {
               size="sm"
               className="w-full"
             >
-              {isLoading ? 'Switching...' : 'Switch to Avalanche'}
+              {isLoading ? "Switching..." : "Switch to Avalanche"}
             </Button>
           </div>
         )}

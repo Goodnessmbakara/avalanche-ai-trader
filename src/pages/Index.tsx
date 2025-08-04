@@ -1,4 +1,4 @@
-import TradingDashboard from '../components/TradingDashboard';
+import TradingDashboard from "../components/TradingDashboard";
 
 /**
  * Main Index Page for AI-Powered Trading System
