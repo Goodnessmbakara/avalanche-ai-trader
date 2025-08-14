@@ -1,0 +1,38 @@
+{
+  "fuji": {
+    "network": "fuji",
+    "contracts": {
+      "PriceOracle": {
+        "address": "",
+        "transactionHash": "",
+        "blockNumber": 0,
+        "constructorArgs": []
+      },
+      "AIPoweredTrader": {
+        "address": "",
+        "transactionHash": "",
+        "blockNumber": 0,
+        "constructorArgs": []
+      }
+    },
+    "deployedAt": ""
+  },
+  "avalanche": {
+    "network": "avalanche",
+    "contracts": {
+      "PriceOracle": {
+        "address": "",
+        "transactionHash": "",
+        "blockNumber": 0,
+        "constructorArgs": []
+      },
+      "AIPoweredTrader": {
+        "address": "",
+        "transactionHash": "",
+        "blockNumber": 0,
+        "constructorArgs": []
+      }
+    },
+    "deployedAt": ""
+  }
+}
