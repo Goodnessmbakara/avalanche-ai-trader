@@ -292,6 +292,13 @@ export class LSTMPredictor {
       console.error('Failed to load LSTM model:', error);
     }
   }
+
+  /**
+   * Check if model is ready
+   */
+  isReady(): boolean {
+    return this.model !== null && this.scaler !== null;
+  }
 }
 
 /**
@@ -520,6 +527,33 @@ export class QLearningAgent {
     } catch (error) {
       console.error('Failed to load RL model:', error);
     }
+  }
+
+  /**
+   * Export Q-table for server-side persistence
+   */
+  exportQTable(): any {
+    const qTableObj: any = {};
+    this.qTable.forEach((actions, state) => {
+      qTableObj[state] = {};
+      actions.forEach((value, action) => {
+        qTableObj[state][action] = value;
+      });
+    });
+    return qTableObj;
+  }
+
+  /**
+   * Import Q-table from server-side persistence
+   */
+  importQTable(qTableObj: any): void {
+    this.qTable.clear();
+    Object.keys(qTableObj).forEach(state => {
+      this.qTable.set(state, new Map());
+      Object.keys(qTableObj[state]).forEach(action => {
+        this.qTable.get(state)!.set(action, qTableObj[state][action]);
+      });
+    });
   }
 }
 

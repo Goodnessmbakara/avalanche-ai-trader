@@ -36,6 +36,22 @@ export default defineConfig(({ mode }) => ({
           });
         },
       },
+      // Catch-all backend proxy for all other /api routes
+      '/api': {
+        target: `http://localhost:${process.env.BACKEND_PORT || 5000}`,
+        changeOrigin: true,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, req, res) => {
+            console.log('Backend proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Sending request to backend:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Received response from backend:', proxyRes.statusCode, req.url);
+          });
+        },
+      },
     },
   },
   plugins: [

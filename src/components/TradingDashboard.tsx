@@ -1,393 +1,585 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import PriceChart from "./PriceChart";
-import PortfolioSummary from "./PortfolioSummary";
-import TradeControls from "./TradeControls";
-import AIInsights from "./AIInsights";
-import WalletConnection from "./WalletConnection";
-import { useWeb3 } from "@/hooks/useWeb3";
-import { useAITrading } from "@/hooks/useAITrading";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Button } from './ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Badge } from './ui/badge';
+import { Progress } from './ui/progress';
+import { Alert, AlertDescription } from './ui/alert';
+import { Separator } from './ui/separator';
+import { Skeleton } from './ui/skeleton';
+import { Toast, useToast } from './ui/use-toast';
+import { PortfolioSummary } from './PortfolioSummary';
+import { PerformanceMetrics } from './PerformanceMetrics';
+import { BacktestingInterface } from './BacktestingInterface';
+import { RebalancingInterface } from './RebalancingInterface';
+import { AutoTradingManager } from './AutoTradingManager';
+import TradeControls from './TradeControls';
+import AIInsights from './AIInsights';
+import PriceChart from './PriceChart';
+import { StreamingStatus } from './StreamingStatus';
+import { usePortfolioAnalytics } from '../hooks/usePortfolioAnalytics';
+import { useWeb3 } from '../hooks/useWeb3';
+import { useAITrading } from '../hooks/useAITrading';
+import { useIsMobile } from '../hooks/use-mobile';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  BarChart3, 
+  Target, 
+  AlertTriangle, 
+  Settings,
+  PieChart,
+  LineChart,
+  Activity,
+  Zap,
+  Shield,
+  DollarSign,
+  Bot,
+  ChartBar,
+  RefreshCw,
+  Bell,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  CheckCircle,
+  Clock,
+  Wifi,
+  WifiOff
+} from 'lucide-react';
+import { cn } from '../lib/utils';
 
-/**
- * Main Trading Dashboard Component
- * Displays real-time AVAX/USDT price data, AI predictions, portfolio metrics,
- * and trade execution controls for the automated trading system
- */
-const TradingDashboard: React.FC = () => {
-  const { isConnected, isAvalancheNetwork } = useWeb3();
+export const TradingDashboard: React.FC = () => {
+  const { toast } = useToast();
+  const isMobile = useIsMobile();
+  
   const {
-    isInitialized,
-    isTraining,
-    trainingProgress,
-    initializationError,
-    historicalDataLength,
-    initializeAI,
-    checkModelsExist,
-    forceRetrain,
-  } = useAITrading();
+    portfolioMetrics,
+    riskMetrics,
+    aiPerformanceMetrics,
+    isLoading: analyticsLoading,
+    error: analyticsError,
+    refreshAnalytics
+  } = usePortfolioAnalytics();
 
-  // Testing mode state
-  const [testingMode, setTestingMode] = useState(false);
-  const [currentTest, setCurrentTest] = useState<string | null>(null);
-  const [modelsExist, setModelsExist] = useState<boolean | null>(null);
+  const { avaxBalance, usdtBalance, portfolioValueUSDT, isLoading: web3Loading } = useWeb3();
+  const { currentSignal, isInitialized } = useAITrading();
+  
+  const [activeTab, setActiveTab] = useState('manual');
+  const [showBacktesting, setShowBacktesting] = useState(false);
+  const [showRebalancing, setShowRebalancing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    id: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+    title: string;
+    message: string;
+    timestamp: Date;
+  }>>([]);
 
-  // Check if models exist on component mount
-  React.useEffect(() => {
-    const exist = checkModelsExist();
-    setModelsExist(exist);
-  }, [checkModelsExist]);
+  // Auto-refresh data every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleRefresh();
+    }, 30000);
 
-  // Debug logging
-  console.log("TradingDashboard render:", {
-    isConnected,
-    isAvalancheNetwork,
-    isInitialized,
-    isTraining,
-    initializationError,
-    historicalDataLength,
-    modelsExist,
-  });
+    return () => clearInterval(interval);
+  }, []);
 
-  const testComponents = [
-    {
-      id: "wallet",
-      name: "Wallet Connection",
-      component: <WalletConnection />,
-    },
-    { id: "pricechart", name: "Price Chart", component: <PriceChart /> },
-    { id: "aiinsights", name: "AI Insights", component: <AIInsights /> },
-    {
-      id: "tradecontrols",
-      name: "Trade Controls",
-      component: <TradeControls />,
-    },
-    {
-      id: "portfolio",
-      name: "Portfolio Summary",
-      component: <PortfolioSummary />,
-    },
-  ];
+  // Handle manual refresh
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAnalytics();
+      setLastUpdate(new Date());
+      toast({
+        title: "Data Updated",
+        description: "Portfolio data has been refreshed successfully.",
+        duration: 2000,
+      });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to refresh portfolio data. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refreshAnalytics, toast]);
 
-  const runComponentTest = (componentId: string) => {
-    setCurrentTest(componentId);
-    console.log(`Testing component: ${componentId}`);
+  // Add notification
+  const addNotification = useCallback((type: 'info' | 'success' | 'warning' | 'error', title: string, message: string) => {
+    const newNotification = {
+      id: Date.now().toString(),
+      type,
+      title,
+      message,
+      timestamp: new Date()
+    };
+    setNotifications(prev => [newNotification, ...prev.slice(0, 9)]); // Keep last 10 notifications
+  }, []);
+
+  // Risk alert notifications
+  useEffect(() => {
+    if (portfolioMetrics.maxDrawdown > 0.15) {
+      addNotification('warning', 'High Drawdown Alert', 'Portfolio drawdown exceeds 15%. Consider risk management.');
+    }
+    if (riskMetrics.var > 0.08) {
+      addNotification('error', 'Risk Limit Exceeded', 'Value at Risk exceeds 8%. Immediate action recommended.');
+    }
+    if (aiPerformanceMetrics.predictionAccuracy > 0.8) {
+      addNotification('success', 'AI Performance', 'AI prediction accuracy is excellent!');
+    }
+  }, [portfolioMetrics.maxDrawdown, riskMetrics.var, aiPerformanceMetrics.predictionAccuracy, addNotification]);
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   };
 
-  if (testingMode) {
-    return (
-      <div className="min-h-screen bg-gradient-dark p-6 space-y-6">
-        {/* Testing Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              🧪 Component Testing Mode
-            </h1>
-            <p className="text-muted-foreground">
-              Testing each component individually
-            </p>
-          </div>
-          <Button onClick={() => setTestingMode(false)} variant="outline">
-            Exit Testing Mode
-          </Button>
+  const formatPercentage = (value: number) => {
+    return `${(value * 100).toFixed(2)}%`;
+  };
+
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  };
+
+  const getMetricColor = (value: number, threshold: number, reverse = false) => {
+    const isGood = reverse ? value <= threshold : value >= threshold;
+    return isGood ? 'text-green-600' : 'text-red-600';
+  };
+
+  const getMetricIcon = (value: number, threshold: number, reverse = false) => {
+    const isGood = reverse ? value <= threshold : value >= threshold;
+    return isGood ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />;
+  };
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
         </div>
-
-        {/* Test Controls */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle>Test Controls</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {testComponents.map((test) => (
-                <Button
-                  key={test.id}
-                  onClick={() => runComponentTest(test.id)}
-                  variant={currentTest === test.id ? "default" : "outline"}
-                  className="text-sm"
-                >
-                  {test.name}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Current Test Component */}
-        {currentTest && (
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle>
-                Testing:{" "}
-                {testComponents.find((t) => t.id === currentTest)?.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="border-2 border-dashed border-primary/50 p-4 rounded">
-                {testComponents.find((t) => t.id === currentTest)?.component}
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-20" />
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {/* Connection Status */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle>Connection Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Wallet Connected:</span>
-                <span className={isConnected ? "text-profit" : "text-loss"}>
-                  {isConnected ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Avalanche Network:</span>
-                <span
-                  className={isAvalancheNetwork ? "text-profit" : "text-loss"}
-                >
-                  {isAvalancheNetwork ? "✅ Yes" : "❌ No"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>AI System:</span>
-                <span
-                  className={isInitialized ? "text-profit" : "text-warning"}
-                >
-                  {isInitialized ? "✅ Ready" : "⏳ Initializing"}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Data Points:</span>
-                <span className="text-foreground">{historicalDataLength}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        ))}
       </div>
+    </div>
+  );
+
+  if (web3Loading || analyticsLoading) {
+    return <LoadingSkeleton />;
+  }
+
+  if (analyticsError) {
+    return (
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Error loading dashboard data: {analyticsError}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="ml-2" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-dark p-6 space-y-6">
-      {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            AI-Powered Trading System
-          </h1>
-          <p className="text-muted-foreground">
-            AVAX/USDT Automated Trading on Pangolin DEX
+    <div className="space-y-6">
+      {/* Enhanced Dashboard Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl lg:text-3xl font-bold">AI Trading Dashboard</h1>
+            <div className="flex items-center gap-2">
+              <Badge variant={isInitialized ? 'default' : 'secondary'} className="hidden sm:flex">
+                <Bot className="w-3 h-3 mr-1" />
+                AI {isInitialized ? 'Active' : 'Inactive'}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                <Wifi className="w-3 h-3 mr-1" />
+                Live
+              </Badge>
+            </div>
+          </div>
+          <p className="text-muted-foreground text-sm lg:text-base">
+            Advanced portfolio management and automated trading
           </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
+            Last updated: {formatTimeAgo(lastUpdate)}
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-sm text-muted-foreground">AI Status</div>
-            <div
-              className={`text-lg font-semibold ${
-                isInitialized ? "text-profit" : "text-warning"
-              }`}
-            >
-              {isTraining
-                ? trainingProgress || "Training..."
-                : isInitialized
-                ? "Ready"
-                : "Initializing..."}
-            </div>
-            {modelsExist !== null && (
-              <div className="text-xs text-muted-foreground">
-                Models: {modelsExist ? "📂 Saved" : "🆕 New"}
-              </div>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="hidden sm:flex"
+          >
+            <RefreshCw className={cn("w-4 h-4 mr-2", isRefreshing && "animate-spin")} />
+            Refresh
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="relative"
+          >
+            <Bell className="w-4 h-4" />
+            {notifications.length > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs">
+                {notifications.length}
+              </Badge>
             )}
-          </div>
-          <div className="flex gap-2">
-            {isInitialized && modelsExist && (
-              <Button
-                onClick={forceRetrain}
-                variant="outline"
-                size="sm"
-                disabled={isTraining}
-              >
-                {isTraining ? "🔄 Training..." : "🔄 Retrain"}
-              </Button>
-            )}
-            <Button
-              onClick={() => setTestingMode(true)}
-              variant="outline"
-              size="sm"
-            >
-              🧪 Test Components
-            </Button>
-          </div>
+          </Button>
+          
+          <Button variant="outline" size="sm" onClick={() => setShowBacktesting(true)}>
+            <BarChart3 className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Backtest</span>
+          </Button>
+          
+          <Button variant="outline" size="sm" onClick={() => setShowRebalancing(true)}>
+            <Target className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Rebalance</span>
+          </Button>
         </div>
       </div>
 
-      {/* Debug Info */}
-      <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-        Debug: Connected: {isConnected ? "Yes" : "No"} | Avalanche:{" "}
-        {isAvalancheNetwork ? "Yes" : "No"} | AI:{" "}
-        {isInitialized ? "Ready" : "Initializing"} | Models:{" "}
-        {modelsExist ? "Saved" : "New"} | Data: {historicalDataLength} points
+      {/* Notifications Panel */}
+      {showNotifications && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Bell className="w-4 h-4" />
+              Recent Notifications
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {notifications.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No recent notifications</p>
+            ) : (
+              notifications.map((notification) => (
+                <div key={notification.id} className="flex items-start gap-2 p-2 rounded border">
+                  <div className="mt-0.5">
+                    {notification.type === 'success' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                    {notification.type === 'warning' && <AlertTriangle className="w-4 h-4 text-yellow-600" />}
+                    {notification.type === 'error' && <AlertTriangle className="w-4 h-4 text-red-600" />}
+                    {notification.type === 'info' && <Info className="w-4 h-4 text-blue-600" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{notification.title}</p>
+                    <p className="text-xs text-muted-foreground">{notification.message}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatTimeAgo(notification.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enhanced Key Performance Indicators */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Portfolio Value</p>
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-center space-x-2">
+                {getMetricIcon(portfolioMetrics.totalReturn, 0)}
+                <p className="text-xl lg:text-2xl font-bold">{formatCurrency(portfolioMetrics.totalValue)}</p>
+              </div>
+              <p className={cn("text-sm", getMetricColor(portfolioMetrics.totalReturn, 0))}>
+                {formatPercentage(portfolioMetrics.totalReturn)} total return
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Sharpe Ratio</p>
+                <Activity className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-center space-x-2">
+                {getMetricIcon(portfolioMetrics.sharpeRatio, 1)}
+                <p className={cn("text-xl lg:text-2xl font-bold", getMetricColor(portfolioMetrics.sharpeRatio, 1))}>
+                  {portfolioMetrics.sharpeRatio.toFixed(2)}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">Risk-adjusted return</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">AI Accuracy</p>
+                <Bot className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-center space-x-2">
+                {getMetricIcon(aiPerformanceMetrics.predictionAccuracy, 0.6)}
+                <p className={cn("text-xl lg:text-2xl font-bold", getMetricColor(aiPerformanceMetrics.predictionAccuracy, 0.6))}>
+                  {formatPercentage(aiPerformanceMetrics.predictionAccuracy)}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">Prediction accuracy</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">Max Drawdown</p>
+                <Shield className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-center space-x-2">
+                {getMetricIcon(portfolioMetrics.maxDrawdown, 0.1, true)}
+                <p className={cn("text-xl lg:text-2xl font-bold", getMetricColor(portfolioMetrics.maxDrawdown, 0.1, true))}>
+                  {formatPercentage(portfolioMetrics.maxDrawdown)}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">Peak to trough decline</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* AI Initialization Error */}
-      {initializationError && (
-        <Alert variant="destructive">
-          <AlertDescription>
-            <strong>AI Initialization Error:</strong> {initializationError}
-            <div className="mt-2">
-              <Button
-                onClick={initializeAI}
-                size="sm"
-                variant="outline"
-                disabled={isTraining}
-              >
-                {isTraining ? "Initializing..." : "Retry AI Initialization"}
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Manual AI Initialization */}
-      {!isInitialized && !isTraining && !initializationError && (
-        <Alert>
-          <AlertDescription>
-            <strong>AI System Ready to Initialize</strong>
-            <div className="mt-2 space-y-2">
-              <div className="text-sm text-muted-foreground">
-                {modelsExist
-                  ? "📂 Found saved models - will load existing models (fast)"
-                  : "🆕 No saved models found - will train new models (slower)"}
-              </div>
-              <div className="flex gap-2">
-                <Button onClick={initializeAI} size="sm" disabled={isTraining}>
-                  {isTraining ? "Initializing..." : "🚀 Initialize AI System"}
-                </Button>
-                <Button
-                  onClick={() => {
-                    const exist = checkModelsExist();
-                    setModelsExist(exist);
-                    console.log("Model check result:", exist);
-                  }}
-                  size="sm"
-                  variant="outline"
-                >
-                  🔍 Check Models
-                </Button>
+      {/* Enhanced Main Dashboard Tabs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Trading Interface</span>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>Live Data</span>
               </div>
             </div>
-          </AlertDescription>
-        </Alert>
-      )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+              <TabsTrigger value="manual" className="flex items-center gap-2">
+                <LineChart className="w-4 h-4" />
+                <span className="hidden sm:inline">Manual Trading</span>
+                <span className="sm:hidden">Manual</span>
+              </TabsTrigger>
+              <TabsTrigger value="auto" className="flex items-center gap-2">
+                <Bot className="w-4 h-4" />
+                <span className="hidden sm:inline">Auto Trading</span>
+                <span className="sm:hidden">Auto</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <ChartBar className="w-4 h-4" />
+                <span className="hidden sm:inline">Portfolio Analytics</span>
+                <span className="sm:hidden">Analytics</span>
+              </TabsTrigger>
+            </TabsList>
 
-      {/* Wallet Connection */}
-      {!isConnected && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2"></div>
-          <WalletConnection />
-        </div>
-      )}
+            <TabsContent value="manual" className="space-y-6 mt-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Enhanced Price Chart */}
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <LineChart className="w-5 h-5" />
+                          Price Chart
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                            <span>Real-time</span>
+                          </div>
+                        </div>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <PriceChart />
+                    </CardContent>
+                  </Card>
+                </div>
 
-      {/* Main Dashboard Grid */}
-      {isConnected && (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Price Chart - Takes up more space */}
-            <div className="lg:col-span-2">
-              <Card className="bg-card border-border shadow-card-trading">
+                {/* Enhanced Trade Controls */}
+                <div className="space-y-4">
+                  <TradeControls />
+                  <StreamingStatus />
+                </div>
+              </div>
+
+              {/* Enhanced AI Insights */}
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-card-foreground">
-                    AVAX/USDT Price Chart & Technical Analysis
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <PriceChart />
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* AI Insights Panel */}
-            <div>
-              <Card className="bg-card border-border shadow-card-trading mb-6">
-                <CardHeader>
-                  <CardTitle className="text-card-foreground">
-                    AI Predictions & Signals
+                  <CardTitle className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-5 h-5" />
+                      AI Insights
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      <Bot className="w-3 h-3 mr-1" />
+                      AI Powered
+                    </Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <AIInsights />
                 </CardContent>
               </Card>
+            </TabsContent>
 
-              {/* Trade Controls */}
-              <Card className="bg-card border-border shadow-card-trading">
-                <CardHeader>
-                  <CardTitle className="text-card-foreground">
-                    Trade Execution
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <TradeControls />
-                </CardContent>
-              </Card>
+            <TabsContent value="auto" className="space-y-6 mt-6">
+              <AutoTradingManager />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="space-y-6 mt-6">
+              <PerformanceMetrics />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Enhanced Portfolio Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <PieChart className="w-5 h-5" />
+              Portfolio Summary
             </div>
-          </div>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PortfolioSummary />
+        </CardContent>
+      </Card>
 
-          {/* Portfolio and Performance Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-card border-border shadow-card-trading">
-              <CardHeader>
-                <CardTitle className="text-card-foreground">
-                  Portfolio Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PortfolioSummary />
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card border-border shadow-card-trading">
-              <CardHeader>
-                <CardTitle className="text-card-foreground">
-                  Performance Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Total ROI</span>
-                    <span className="text-profit font-semibold">+24.5%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Sharpe Ratio</span>
-                    <span className="text-foreground font-semibold">1.84</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Max Drawdown</span>
-                    <span className="text-loss font-semibold">-8.2%</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Win Rate</span>
-                    <span className="text-profit font-semibold">68.4%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </>
+      {/* Enhanced Risk Alerts */}
+      {(portfolioMetrics.maxDrawdown > 0.1 || riskMetrics.var > 0.05 || portfolioMetrics.sharpeRatio < 1) && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-800">
+              <AlertTriangle className="w-5 h-5" />
+              Risk Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {portfolioMetrics.maxDrawdown > 0.1 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Maximum drawdown exceeds 10% threshold. Consider risk management adjustments.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {riskMetrics.var > 0.05 && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Value at Risk exceeds 5% limit. Portfolio may be overexposed to risk.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {portfolioMetrics.sharpeRatio < 1 && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Sharpe ratio below optimal level. Consider strategy optimization.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Fallback for connected but no components showing */}
-      {isConnected && (
-        <div className="text-center text-muted-foreground">
-          <p>
-            If you don't see the dashboard components, please check the browser
-            console for errors.
-          </p>
+      {/* Enhanced Backtesting Modal */}
+      {showBacktesting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg p-4 w-full max-w-6xl h-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 sticky top-0 bg-background py-2">
+              <h2 className="text-xl lg:text-2xl font-bold">Strategy Backtesting</h2>
+              <Button variant="outline" onClick={() => setShowBacktesting(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <BacktestingInterface />
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Rebalancing Modal */}
+      {showRebalancing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-background rounded-lg p-4 w-full max-w-6xl h-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 sticky top-0 bg-background py-2">
+              <h2 className="text-xl lg:text-2xl font-bold">Portfolio Rebalancing</h2>
+              <Button variant="outline" onClick={() => setShowRebalancing(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+            <RebalancingInterface />
+          </div>
         </div>
       )}
     </div>

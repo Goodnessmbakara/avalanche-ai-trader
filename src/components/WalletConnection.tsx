@@ -200,7 +200,7 @@ const WalletConnection: React.FC = () => {
             <div className="flex justify-between items-center pt-2 border-t border-border">
               <span className="text-muted-foreground">Portfolio Value</span>
               <span className="text-foreground font-bold">
-                ${(avaxBalance * 42.35 + usdtBalance).toFixed(2)}
+                ${(avaxBalance * 23.07 + usdtBalance).toFixed(2)}
               </span>
             </div>
           </div>

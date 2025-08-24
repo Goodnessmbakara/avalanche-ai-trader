@@ -1,210 +1,323 @@
 # Avalanche AI Trader
 
-## Project info
+An advanced AI-powered trading system built on the Avalanche blockchain, featuring real-time portfolio analytics, automated trading strategies, and comprehensive risk management.
 
-**URL**: <YOUR_PROJECT_URL>
+## Features
 
-A sophisticated AI-powered trading platform built on Avalanche C-Chain, featuring machine learning price predictions and automated trading through smart contracts.
+### Core Trading System
+- **AI-Powered Predictions**: LSTM and Reinforcement Learning models for price prediction
+- **Automated Trading**: Intelligent trade execution with risk management
+- **Real-time Data**: Live price feeds and market data streaming
+- **Smart Contract Integration**: Direct interaction with Pangolin DEX on Avalanche
 
-## How can I edit this code?
+### Portfolio Analytics
+- **Real-time P&L Tracking**: Live portfolio performance monitoring with automatic updates every 30 seconds
+- **Advanced Performance Metrics**: Comprehensive analytics including Sharpe ratio, maximum drawdown, volatility, and win rate calculations
+- **Risk Analysis**: Value at Risk (VaR), Conditional VaR, beta, and correlation metrics with automated risk alerts
+- **AI Performance Correlation**: Analysis of AI prediction accuracy, signal effectiveness, and confidence correlation with actual returns
 
-You can edit your application in several ways:
+### Backtesting Engine
+- **Strategy Validation**: Test trading strategies using historical data with realistic market conditions
+- **Multiple AI Models**: Support for LSTM, Reinforcement Learning, and ensemble model backtesting
+- **Performance Comparison**: Benchmark strategies against buy-and-hold and other approaches
+- **Monte Carlo Simulation**: Robustness testing with 1000+ iterations for strategy validation
+- **Export Capabilities**: Detailed backtesting reports with performance metrics and trade analysis
 
-**Use your preferred IDE**
+### Portfolio Rebalancing
+- **AI-Driven Allocation**: Intelligent asset allocation based on AI signals and confidence levels
+- **Risk-Based Optimization**: Modern portfolio theory with VaR and volatility constraints
+- **Automatic Rebalancing**: Configurable triggers for automatic portfolio rebalancing
+- **Cost-Aware Execution**: Transaction cost optimization with slippage modeling
+- **Real-time Recommendations**: Live rebalancing suggestions with impact analysis
 
-Clone this repo and push changes. The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Risk Management
+- **Multi-Level Risk Controls**: Position sizing, stop-loss, take-profit, and drawdown limits
+- **Real-time Monitoring**: Continuous risk assessment with automated alerts
+- **Portfolio Optimization**: Mean-variance optimization with efficient frontier analysis
+- **Concentration Analysis**: Herfindahl index and concentration risk assessment
 
-Follow these steps:
+## Architecture
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Frontend Components
+- **TradingDashboard**: Main interface with real-time portfolio analytics and trading controls
+- **PortfolioSummary**: Enhanced portfolio overview with live metrics and rebalancing interface
+- **PerformanceMetrics**: Detailed performance analysis with time period filtering and benchmark comparisons
+- **BacktestingInterface**: Comprehensive strategy testing with parameter optimization
+- **RebalancingInterface**: Intelligent allocation management with AI-driven recommendations
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Backend Services
+- **Portfolio Analytics Hook**: Real-time portfolio tracking and metrics calculation
+- **Backtesting Engine**: Historical strategy simulation with performance attribution
+- **Portfolio Rebalancer**: AI-driven allocation optimization and trade execution
+- **Risk Management**: Comprehensive risk calculation and monitoring utilities
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Data Flow
+```
+Real-time Market Data → AI Models → Trading Signals → Portfolio Analytics → Rebalancing Engine → Trade Execution
 ```
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## Smart Contract Development
-
-This project includes smart contracts for AI-validated trading on Avalanche. The contracts provide on-chain validation of AI predictions before executing trades.
+## Getting Started
 
 ### Prerequisites
+- Node.js 18+ and npm/yarn
+- MetaMask or other Web3 wallet
+- Avalanche C-Chain network configured
 
-- Node.js 18+ and npm
-- Hardhat development environment
-- MetaMask or compatible Web3 wallet
-- Test AVAX for Fuji testnet
-
-### Environment Setup
-
-1. Copy the environment template:
-```sh
-cp .env.example .env
+### Installation
+```bash
+git clone https://github.com/your-username/avalanche-ai-trader.git
+cd avalanche-ai-trader
+npm install
 ```
 
-2. Fill in your environment variables:
+### Configuration
+1. Set up your environment variables in `.env`:
 ```env
-# Backend/Deployment variables
-PRIVATE_KEY=your_private_key_here
-AVALANCHE_RPC_URL=https://avax-mainnet.g.alchemy.com/v2/your_key
-FUJI_RPC_URL=https://avax-fuji.g.alchemy.com/v2/your_key
-SNOWTRACE_API_KEY=your_snowtrace_api_key
-NETWORK=fuji
-
-# Frontend variables (set these after deployment)
-VITE_NETWORK=fuji
-VITE_AI_POWERED_TRADER_ADDRESS=your_deployed_contract_address
-VITE_PRICE_ORACLE_ADDRESS=your_deployed_contract_address
+VITE_AVALANCHE_RPC_URL=https://api.avax.network/ext/bc/C/rpc
+VITE_PANGOLIN_ROUTER_ADDRESS=0xE54Ca86531e17Ef3616d22Ca28b0D458b6C89106
+VITE_AI_MODEL_ENDPOINT=http://localhost:3001/api/predict
 ```
 
-### Smart Contract Commands
+2. Configure your wallet for Avalanche C-Chain:
+   - Network Name: Avalanche C-Chain
+   - RPC URL: https://api.avax.network/ext/bc/C/rpc
+   - Chain ID: 43114
+   - Symbol: AVAX
 
-```sh
-# Compile contracts
-npm run compile
+### Usage
 
-# Run tests
-npm run test
+#### Portfolio Analytics
+1. **View Real-time Performance**: Access live portfolio metrics including total return, Sharpe ratio, and drawdown
+2. **Analyze Risk Metrics**: Monitor VaR, volatility, and correlation with automated risk alerts
+3. **Track AI Performance**: Evaluate prediction accuracy and signal effectiveness
+4. **Benchmark Comparison**: Compare performance against AVAX buy-and-hold and market indices
 
-# Deploy to Fuji testnet
-npm run deploy:fuji
+#### Backtesting Strategies
+1. **Select Strategy Template**: Choose from Conservative LSTM, Aggressive RL, or Balanced Ensemble
+2. **Configure Parameters**: Adjust risk parameters, confidence thresholds, and trading rules
+3. **Run Backtest**: Execute historical simulation with progress tracking
+4. **Analyze Results**: Review performance metrics, equity curves, and trade analysis
+5. **Export Reports**: Download detailed backtesting results for further analysis
 
-# Deploy to Avalanche mainnet
-npm run deploy:avalanche
+#### Portfolio Rebalancing
+1. **Generate Recommendations**: Use AI-driven allocation suggestions based on current market conditions
+2. **Review Impact Analysis**: Assess expected return improvement and risk reduction
+3. **Execute Rebalancing**: One-click execution through the trade execution system
+4. **Monitor Results**: Track rebalancing performance and cost recovery
 
-# Verify contracts on Snowtrace
-npm run verify
+#### Risk Management
+1. **Set Risk Limits**: Configure maximum position sizes, drawdown limits, and VaR thresholds
+2. **Monitor Alerts**: Receive real-time notifications for risk limit breaches
+3. **Optimize Allocation**: Use mean-variance optimization for efficient portfolio construction
+4. **Analyze Concentration**: Monitor portfolio concentration and diversification metrics
+
+## API Reference
+
+### Portfolio Analytics Hook
+```typescript
+const {
+  portfolioMetrics,
+  riskMetrics,
+  aiPerformanceMetrics,
+  portfolioHistory,
+  calculateRealTimePnL,
+  refreshAnalytics
+} = usePortfolioAnalytics();
 ```
 
-### Contract Architecture
-
-- **PriceOracle.sol**: Stores and validates AI price predictions with confidence thresholds
-- **AIPoweredTrader.sol**: Executes trades through Pangolin DEX with mandatory AI validation
-- **IPangolinRouter.sol**: Interface for Pangolin DEX router integration
-
-### Key Features
-
-- **AI Validation**: All trades require valid AI predictions with 70%+ confidence
-- **Security**: OpenZeppelin security patterns (Ownable, ReentrancyGuard, Pausable)
-- **Emergency Controls**: Pause/unpause functionality and emergency withdrawals
-- **Multi-Network**: Support for both Fuji testnet and Avalanche mainnet
-- **TypeScript Integration**: Full TypeScript support with generated contract types
-
-### Testing
-
-The smart contracts include comprehensive test suites:
-
-```sh
-# Run all tests
-npm run test
-
-# Run specific test file
-npx hardhat test test/PriceOracle.test.ts
-npx hardhat test test/AIPoweredTrader.test.ts
+### Backtesting Engine
+```typescript
+const backtestEngine = new BacktestEngine();
+const result = await backtestEngine.runBacktest(strategy, config);
 ```
 
-### Deployment
-
-Contracts are deployed in sequence:
-1. PriceOracle (no dependencies)
-2. AIPoweredTrader (requires PriceOracle and Pangolin Router addresses)
-
-Deployment addresses are automatically saved to `deployments.json` and contract ABIs are copied to the frontend. After deployment, copy the contract addresses to your `.env` file for the frontend to use.
-
-### Frontend Setup
-
-After deploying the smart contracts:
-
-1. Copy the contract addresses from the deployment output or `deployments.json` to your `.env` file:
-```env
-VITE_AI_POWERED_TRADER_ADDRESS=0x...
-VITE_PRICE_ORACLE_ADDRESS=0x...
+### Portfolio Rebalancer
+```typescript
+const rebalancer = new PortfolioRebalancer();
+const recommendation = rebalancer.generateRebalanceRecommendation(params);
 ```
 
-2. Start the development server:
-```sh
-npm run dev
-```
+## Performance Metrics
 
-The frontend will automatically connect to the deployed contracts using the environment variables.
+### Portfolio Analytics
+- **Total Return**: Overall portfolio performance
+- **Sharpe Ratio**: Risk-adjusted return measure
+- **Maximum Drawdown**: Peak-to-trough decline
+- **Volatility**: Portfolio price variability
+- **Win Rate**: Percentage of profitable trades
+- **Profit Factor**: Ratio of gross profit to gross loss
 
-## What technologies are used for this project?
+### Risk Metrics
+- **Value at Risk (VaR)**: Maximum expected loss at 95% confidence
+- **Conditional VaR**: Expected loss beyond VaR threshold
+- **Beta**: Portfolio sensitivity to market movements
+- **Information Ratio**: Excess return per unit of tracking error
 
-This project is built with:
+### AI Performance
+- **Prediction Accuracy**: Percentage of correct directional predictions
+- **Signal Effectiveness**: Correlation between AI confidence and actual returns
+- **Confidence Correlation**: Relationship between prediction confidence and performance
 
-### Frontend
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-- Web3.js
-- TensorFlow.js (AI models)
+## Best Practices
 
-### Smart Contracts
-- Solidity 0.8.19
-- Hardhat
-- OpenZeppelin Contracts
-- TypeChain
-- Ethers.js
+### Portfolio Management
+1. **Regular Rebalancing**: Maintain target allocations with periodic rebalancing
+2. **Risk Monitoring**: Continuously monitor risk metrics and adjust positions accordingly
+3. **Diversification**: Ensure adequate portfolio diversification across assets
+4. **Cost Management**: Consider transaction costs when executing rebalancing trades
 
-### AI/ML
-- LSTM Neural Networks
-- Q-Learning Algorithms
-- Real-time price prediction
-- Confidence scoring
+### Strategy Development
+1. **Backtest Thoroughly**: Always validate strategies with comprehensive backtesting
+2. **Parameter Optimization**: Use Monte Carlo simulation for robust parameter selection
+3. **Risk Controls**: Implement appropriate risk limits and stop-loss mechanisms
+4. **Performance Monitoring**: Continuously track strategy performance and adjust as needed
 
-### Blockchain
-- Avalanche C-Chain
-- Pangolin DEX
-- MetaMask integration
-- Multi-network support
+### Risk Management
+1. **Position Sizing**: Use appropriate position sizes based on portfolio value and risk tolerance
+2. **Stop Losses**: Implement automatic stop-loss orders to limit downside risk
+3. **Diversification**: Avoid over-concentration in single assets or strategies
+4. **Regular Review**: Periodically review and adjust risk parameters
 
-## How can I deploy this project?
+## Contributing
 
-You can deploy this project using your preferred hosting provider (e.g., Vercel, Netlify, AWS, etc.).
-
-### Smart Contract Deployment
-
-1. **Testnet Deployment**:
-```sh
-npm run deploy:fuji
-```
-
-2. **Mainnet Deployment**:
-```sh
-npm run deploy:avalanche
-```
-
-3. **Contract Verification**:
-```sh
-npm run verify
-```
-
-## Can I connect a custom domain?
-
-Yes, you can! Follow your hosting provider's instructions to connect a custom domain.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Disclaimer
+
+This software is for educational and research purposes only. Trading cryptocurrencies involves substantial risk of loss and is not suitable for all investors. Past performance does not guarantee future results. Always conduct your own research and consider consulting with a financial advisor before making investment decisions.
+
+## Production Deployment
+
+The AI Trading system includes comprehensive production optimization features for enterprise-grade deployment.
+
+### Environment Management
+
+The system uses a robust environment configuration system with encrypted API key storage and validation:
+
+```bash
+# Environment variables (see .env.example for complete list)
+NODE_ENV=production
+BACKEND_PORT=5001
+REDIS_URL=redis://localhost:6379
+REDIS_PASSWORD=your_redis_password
+LOG_LEVEL=info
+LOG_DIR=./logs
+METRICS_PORT=9090
+PROMETHEUS_ENABLED=true
+ADMIN_API_KEY=your_admin_api_key
+ENCRYPTION_KEY=your_encryption_key_32_chars
+MODEL_VERSION_STRATEGY=ab_test
+AB_TEST_TRAFFIC_SPLIT=50
+MODEL_PERFORMANCE_THRESHOLD=0.85
+CACHE_ENABLED=true
+COMPRESSION_ENABLED=true
+```
+
+### Model Versioning & A/B Testing
+
+Deploy and manage AI models with versioning and A/B testing capabilities:
+
+```bash
+# Deploy a new model
+npm run deploy:model deploy ./model-config.json
+
+# Create A/B test
+npm run deploy:model ab-test v1.0.0 v1.1.0 50
+
+# Evaluate A/B test results
+npm run deploy:model evaluate test-123
+
+# Rollback to previous version
+npm run deploy:model rollback v1.0.0
+```
+
+### Monitoring & Logging
+
+Comprehensive monitoring with Prometheus metrics and structured logging:
+
+- **Health Checks**: `/api/admin/health` - Detailed system health status
+- **Metrics**: `/api/admin/metrics` - Prometheus metrics export
+- **Model Management**: `/api/admin/models` - Model version management
+- **Cache Management**: `/api/admin/cache` - Redis cache monitoring
+- **System Optimization**: `/api/admin/system/optimize` - Trigger optimizations
+
+### Docker Deployment
+
+Deploy using Docker Compose with monitoring stack:
+
+```bash
+# Production deployment
+cd deployment
+docker-compose -f docker-compose.prod.yml up -d
+
+# With monitoring stack
+docker-compose -f docker-compose.prod.yml --profile monitoring up -d
+```
+
+### Performance Optimization
+
+The system includes automatic performance optimizations:
+
+- **Memory Management**: Automatic TensorFlow.js memory cleanup
+- **Caching**: Redis-based caching for AI predictions and market data
+- **Compression**: Response compression for improved performance
+- **Rate Limiting**: API rate limiting for security and stability
+- **Health Monitoring**: Continuous system health monitoring
+
+### Security Features
+
+Enterprise-grade security features:
+
+- **API Key Encryption**: Secure storage of sensitive API keys
+- **Rate Limiting**: Protection against abuse and DDoS
+- **CORS Configuration**: Configurable cross-origin resource sharing
+- **Security Headers**: Helmet.js for security headers
+- **Admin Authentication**: Secure admin API access
+
+### Production Dashboard
+
+Access the production monitoring dashboard at `/admin` to view:
+
+- Real-time system health status
+- Performance metrics and trends
+- Model version management
+- Cache performance statistics
+- Error monitoring and alerts
+
+### Scaling Considerations
+
+For high-traffic deployments:
+
+1. **Horizontal Scaling**: Deploy multiple instances behind a load balancer
+2. **Redis Clustering**: Use Redis Cluster for high availability
+3. **Database Optimization**: Implement database connection pooling
+4. **CDN Integration**: Use CDN for static assets and caching
+5. **Monitoring Stack**: Deploy full ELK stack for log aggregation
+
+### Backup & Recovery
+
+Implement backup strategies:
+
+- **Model Backups**: Regular backups of trained models
+- **Configuration Backups**: Version control for configuration files
+- **Database Backups**: Regular database backups
+- **Disaster Recovery**: Automated recovery procedures
+
+## Support
+
+For support and questions:
+- Create an issue in the GitHub repository
+- Join our Discord community
+- Check the documentation in the `/docs` folder
+
+---
+
+**Built with ❤️ for the Avalanche ecosystem**

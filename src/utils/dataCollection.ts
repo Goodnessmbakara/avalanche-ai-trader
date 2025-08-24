@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { MarketDataPoint } from '../shared/types';
 
 /**
  * Data Collection Utilities for Pangolin DEX
@@ -44,17 +45,6 @@ export interface SwapData {
 /**
  * Interface for processed market data
  */
-export interface MarketDataPoint {
-  timestamp: number;
-  price: number;
-  volume: number;
-  high: number;
-  low: number;
-  open: number;
-  close: number;
-  transactionCount: number;
-  liquidity: number;
-}
 
 /**
  * GraphQL query for fetching swap data from Pangolin
@@ -578,4 +568,119 @@ export const exportDataAsCSV = (data: MarketDataPoint[]): string => {
   );
   
   return [headers.join(','), ...rows].join('\n');
+};
+
+// Streaming integration
+let streamingClient: any = null;
+let streamingEventEmitter: any = null;
+
+/**
+ * Initialize live data streaming
+ */
+export const initLiveDataStream = async (): Promise<any> => {
+  if (streamingEventEmitter) {
+    return streamingEventEmitter;
+  }
+
+  try {
+    const { StreamingClient } = await import('./streamingClient');
+    streamingClient = new StreamingClient();
+    streamingEventEmitter = streamingClient.getStreamBus();
+    
+    console.log('✅ Live data streaming initialized');
+    return streamingEventEmitter;
+  } catch (error) {
+    console.error('❌ Failed to initialize streaming:', error);
+    throw error;
+  }
+};
+
+/**
+ * Start price streaming
+ */
+export const startPriceStreaming = async (): Promise<void> => {
+  if (!streamingClient) {
+    await initLiveDataStream();
+  }
+  
+  if (streamingClient) {
+    await streamingClient.connectPriceStream();
+  }
+};
+
+/**
+ * Start subgraph streaming
+ */
+export const startSubgraphStreaming = async (): Promise<void> => {
+  if (!streamingClient) {
+    await initLiveDataStream();
+  }
+  
+  if (streamingClient) {
+    await streamingClient.connectSubgraphStream();
+  }
+};
+
+/**
+ * Stop streaming (renamed from stopPriceStreaming for clarity - Comment 10)
+ */
+export const stopStreaming = (): void => {
+  if (streamingClient) {
+    streamingClient.disconnect();
+  }
+};
+
+/**
+ * Stop price streaming (deprecated, use stopStreaming instead)
+ * @deprecated Use stopStreaming instead
+ */
+export const stopPriceStreaming = (): void => {
+  console.warn('stopPriceStreaming is deprecated, use stopStreaming instead');
+  stopStreaming();
+};
+
+/**
+ * Check if streaming is active
+ */
+export const isStreamingActive = (): boolean => {
+  return streamingClient ? streamingClient.isStreamingActive() : false;
+};
+
+/**
+ * Get streaming status
+ */
+export const getStreamingStatus = (): any => {
+  return streamingClient ? streamingClient.getStatus() : null;
+};
+
+/**
+ * Get last streaming price update
+ */
+export const getLastStreamingPrice = (): MarketDataPoint | null => {
+  return streamingClient ? streamingClient.getLastPriceUpdate() : null;
+};
+
+/**
+ * Get historical data for backtesting
+ * @param startDate - Start date for data collection
+ * @param endDate - End date for data collection
+ * @param symbols - Array of symbols to fetch data for
+ * @returns Array of market data points
+ */
+export const getHistoricalData = async (
+  startDate: Date,
+  endDate: Date
+): Promise<MarketDataPoint[]> => {
+  try {
+    console.log(`Fetching historical data from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+    
+    // TODO: Support per-symbol sources later
+    const symbolData = await collectHistoricalData(startDate, endDate);
+    
+    console.log(`✅ Fetched ${symbolData.length} historical data points`);
+    return symbolData;
+  } catch (error) {
+    console.error('❌ Failed to fetch historical data:', error);
+    throw error;
+  }
 };

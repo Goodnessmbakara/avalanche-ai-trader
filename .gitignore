@@ -7,6 +7,23 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Production files
+server/models/*.bin
+server/models/*.json
+.env.local
+.env.production
+deployment/secrets/
+monitoring/data/
+cache/
+*.pem
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Kubernetes
+k8s/secrets/
+
 node_modules
 dist
 dist-ssr
@@ -37,3 +54,9 @@ coverage.json
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Backend specific
+server/models/*.json
+server/models/*.bin
+server/dist/
+.env.local
