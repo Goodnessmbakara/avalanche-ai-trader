@@ -7,7 +7,7 @@ import { Progress } from './ui/progress';
 import { Alert, AlertDescription } from './ui/alert';
 import { Separator } from './ui/separator';
 import { Skeleton } from './ui/skeleton';
-import { Toast, useToast } from './ui/use-toast';
+import { useToast } from './ui/use-toast';
 import { PortfolioSummary } from './PortfolioSummary';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { BacktestingInterface } from './BacktestingInterface';
@@ -17,6 +17,10 @@ import TradeControls from './TradeControls';
 import AIInsights from './AIInsights';
 import PriceChart from './PriceChart';
 import { StreamingStatus } from './StreamingStatus';
+import { SignalAnalysis } from './SignalAnalysis';
+import { PerformanceComparison } from './PerformanceComparison';
+import { RiskAlerts } from './RiskAlerts';
+import { AllocationAnalysis } from './AllocationAnalysis';
 import { usePortfolioAnalytics } from '../hooks/usePortfolioAnalytics';
 import { useWeb3 } from '../hooks/useWeb3';
 import { useAITrading } from '../hooks/useAITrading';
@@ -414,7 +418,7 @@ export const TradingDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5">
               <TabsTrigger value="manual" className="flex items-center gap-2">
                 <LineChart className="w-4 h-4" />
                 <span className="hidden sm:inline">Manual Trading</span>
@@ -425,9 +429,19 @@ export const TradingDashboard: React.FC = () => {
                 <span className="hidden sm:inline">Auto Trading</span>
                 <span className="sm:hidden">Auto</span>
               </TabsTrigger>
+              <TabsTrigger value="signals" className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                <span className="hidden sm:inline">Signal Analysis</span>
+                <span className="sm:hidden">Signals</span>
+              </TabsTrigger>
+              <TabsTrigger value="performance" className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Performance</span>
+                <span className="sm:hidden">Perf</span>
+              </TabsTrigger>
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <ChartBar className="w-4 h-4" />
-                <span className="hidden sm:inline">Portfolio Analytics</span>
+                <span className="hidden sm:inline">Analytics</span>
                 <span className="sm:hidden">Analytics</span>
               </TabsTrigger>
             </TabsList>
@@ -460,7 +474,18 @@ export const TradingDashboard: React.FC = () => {
                 {/* Enhanced Trade Controls */}
                 <div className="space-y-4">
                   <TradeControls />
-                  <StreamingStatus />
+                  <StreamingStatus 
+                    isStreamingEnabled={true}
+                    streamingStatus={{
+                      priceStreamActive: true,
+                      subgraphStreamActive: true,
+                      lastPriceUpdate: Date.now() / 1000,
+                      connectionErrors: []
+                    }}
+                    streamingError={null}
+                    onEnableStreaming={() => {}}
+                    onDisableStreaming={() => {}}
+                  />
                 </div>
               </div>
 
@@ -488,8 +513,20 @@ export const TradingDashboard: React.FC = () => {
               <AutoTradingManager />
             </TabsContent>
 
+            <TabsContent value="signals" className="space-y-6 mt-6">
+              <SignalAnalysis />
+            </TabsContent>
+
+            <TabsContent value="performance" className="space-y-6 mt-6">
+              <PerformanceComparison />
+            </TabsContent>
+
             <TabsContent value="analytics" className="space-y-6 mt-6">
-              <PerformanceMetrics />
+              <div className="space-y-6">
+                <RiskAlerts />
+                <AllocationAnalysis />
+                <PerformanceMetrics />
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
