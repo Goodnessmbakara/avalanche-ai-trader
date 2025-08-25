@@ -97,18 +97,18 @@ simplePredictRouter.get('/data-summary', async (req, res) => {
     }
 
     // Calculate summary statistics
-    const prices = historicalData.map(d => d.price);
-    const volumes = historicalData.map(d => d.volume);
+    const prices = historicalData.map((d: any) => d.price);
+    const volumes = historicalData.map((d: any) => d.volume);
     
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const currentPrice = prices[prices.length - 1];
-    const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length;
-    const avgVolume = volumes.reduce((a, b) => a + b, 0) / volumes.length;
+    const avgPrice = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+    const avgVolume = volumes.reduce((a: number, b: number) => a + b, 0) / volumes.length;
     
     // Calculate recent performance (last 30 data points)
     const recentData = historicalData.slice(-30);
-    const recentPrices = recentData.map(d => d.price);
+    const recentPrices = recentData.map((d: any) => d.price);
     const priceChange = recentPrices[recentPrices.length - 1] - recentPrices[0];
     const priceChangePercent = (priceChange / recentPrices[0]) * 100;
 
@@ -130,7 +130,7 @@ simplePredictRouter.get('/data-summary', async (req, res) => {
         },
         volumeStatistics: {
           average: Math.round(avgVolume * 100) / 100,
-          recent: Math.round(volumes.slice(-10).reduce((a, b) => a + b, 0) / 10 * 100) / 100
+          recent: Math.round(volumes.slice(-10).reduce((a: number, b: number) => a + b, 0) / 10 * 100) / 100
         },
         dataSource: 'coingecko_api',
         lastUpdated: new Date().toISOString()

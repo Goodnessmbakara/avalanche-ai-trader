@@ -5,27 +5,16 @@
 
 import { RiskParameters, PositionSizeResult, RiskAssessment, MarketConditions } from '@/shared/types';
 
+import { calculateVolatilityPercentage } from './dataPreprocessing';
+
 /**
  * Calculate volatility from price history
  * @param prices - Array of price values
  * @returns Volatility as a percentage
+ * @deprecated Use calculateVolatilityPercentage from './dataPreprocessing' instead
  */
 export const calculateVolatility = (prices: number[]): number => {
-  if (prices.length < 2) return 0;
-  
-  // Calculate price returns
-  const returns: number[] = [];
-  for (let i = 1; i < prices.length; i++) {
-    const return_ = (prices[i] - prices[i - 1]) / prices[i - 1];
-    returns.push(return_);
-  }
-  
-  // Calculate volatility (standard deviation of returns)
-  const mean = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-  const variance = returns.reduce((sum, r) => sum + Math.pow(r - mean, 2), 0) / returns.length;
-  const volatility = Math.sqrt(variance) * Math.sqrt(365 * 24 * 60); // Annualized
-  
-  return volatility * 100; // Convert to percentage
+  return calculateVolatilityPercentage(prices);
 };
 
 /**

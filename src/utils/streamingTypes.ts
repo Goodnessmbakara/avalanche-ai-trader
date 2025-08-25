@@ -10,8 +10,6 @@ export type {
   ConnectionStatusEvent,
   ErrorEvent,
   ReconnectEvent,
-  StreamingStatus,
-  StreamingConfig,
   ConnectionState,
   ValidationResult,
   StreamHealth

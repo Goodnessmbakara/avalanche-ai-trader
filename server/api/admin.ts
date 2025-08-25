@@ -52,7 +52,7 @@ router.get('/health', async (req, res) => {
     
     // Check external dependencies
     const redisHealth = cache.isReady();
-    const aiSystemHealth = aiSystem.isInitialized;
+    const aiSystemHealth = aiSystem.getSystemState().isInitialized;
     
     const healthStatus = {
       status: 'healthy',
@@ -369,7 +369,7 @@ router.post('/system/restart', async (req, res) => {
       case 'ai':
         // Restart AI system
         await aiSystem.disableStreaming();
-        await aiSystem.initialize(true);
+        await aiSystem.initialize();
         break;
       case 'cache':
         // Reconnect cache

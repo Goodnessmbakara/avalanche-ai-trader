@@ -124,7 +124,7 @@ export class Web3Server {
       // Add 20% buffer for safety
       return Math.ceil(Number(gasEstimate) * 1.2);
     } catch (error) {
-      this.logger.warn('Gas estimation failed, using default', error as Error);
+      this.logger.warn('Gas estimation failed, using default');
       // Return reasonable defaults based on transaction type
       if (transaction.data?.includes('tradeExactAVAXForTokens')) {
         return 300000; // AVAX to token swap
@@ -315,7 +315,7 @@ export class Web3Server {
           throw new Error('Transaction failed on-chain');
         }
       } catch (error) {
-        this.logger.warn(`Transaction attempt ${attempt} failed`, error as Error);
+        this.logger.warn(`Transaction attempt ${attempt} failed`);
         
         if (attempt === maxRetries) {
           return {
@@ -415,7 +415,7 @@ export class Web3Server {
         ], tokenAddress);
 
         const balance = await tokenContract.methods.balanceOf(userAddress).call();
-        return this.web3.utils.fromWei(balance, 'ether');
+        return this.web3.utils.fromWei((balance as any).toString(), 'ether');
       }
     } catch (error) {
       this.logger.error('Failed to get token balance', error as Error);
@@ -440,8 +440,8 @@ export class Web3Server {
       
       return {
         status: receipt.status ? 'confirmed' : 'failed',
-        blockNumber: receipt.blockNumber,
-        gasUsed: receipt.gasUsed
+        blockNumber: Number(receipt.blockNumber),
+        gasUsed: Number(receipt.gasUsed)
       };
     } catch (error) {
       this.logger.error('Failed to get transaction status', error as Error);
@@ -455,7 +455,7 @@ export class Web3Server {
   getConnectionStatus(): { connected: boolean; networkId?: number } {
     return {
       connected: this.isConnected,
-      networkId: this.web3.eth.net.getId()
+      networkId: undefined // Will be set after initialization
     };
   }
 

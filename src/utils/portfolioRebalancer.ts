@@ -7,9 +7,9 @@ import {
 } from '../shared/types';
 import { 
   calculateSharpeRatio, 
-  calculateVolatility,
   calculateVaR 
 } from './riskManagement';
+import { calculateVolatilityPercentage } from './dataPreprocessing';
 
 interface CurrentAllocation {
   [symbol: string]: {

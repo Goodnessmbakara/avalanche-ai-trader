@@ -8,9 +8,9 @@ import {
 import { 
   calculateSharpeRatio, 
   calculateMaxDrawdown, 
-  calculateVaR,
-  calculateVolatility 
+  calculateVaR
 } from './riskManagement';
+import { calculateVolatilityPercentage } from './dataPreprocessing';
 import { getHistoricalData } from './dataCollection';
 
 interface BacktestTrade extends Trade {
@@ -354,7 +354,7 @@ export class BacktestEngine {
     
     const sharpeRatio = calculateSharpeRatio(returns, 0.02);
     const maxDrawdown = calculateMaxDrawdown(equity) / 100;
-    const volatility = calculateVolatility(returns);
+    const volatility = calculateVolatilityPercentage(returns);
     
     // Calculate trade metrics
     const winningTrades = trades.filter(trade => trade.pnl > 0);

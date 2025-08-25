@@ -54,7 +54,11 @@ router.post('/', async (req, res) => {
     const aiSystem = AISystem.getInstance();
     
     // Get prediction
-    const prediction = await aiSystem.predict(recentData);
+    if (!recentData) {
+      throw new Error('No market data available for prediction');
+    }
+    const priceData = recentData.map((d: any) => d.price);
+    const prediction = await aiSystem.predict(priceData);
     
     const response: PredictResponse = {
       price: prediction.price,

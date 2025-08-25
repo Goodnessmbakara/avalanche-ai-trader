@@ -1,4 +1,10 @@
 import * as tf from '@tensorflow/tfjs';
+import { 
+  processMarketData, 
+  calculateSMA, 
+  calculateEMA, 
+  calculateVolatility 
+} from './dataPreprocessing';
 
 /**
  * AI Models for Token Price Prediction and Trading
@@ -30,86 +36,8 @@ export interface ProcessedFeatures {
   volumeChange: number;
 }
 
-/**
- * Calculate Simple Moving Average
- */
-export const calculateSMA = (prices: number[], period: number): number[] => {
-  const sma = [];
-  for (let i = 0; i < prices.length; i++) {
-    if (i < period - 1) {
-      sma.push(0);
-    } else {
-      const sum = prices.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
-      sma.push(sum / period);
-    }
-  }
-  return sma;
-};
-
-/**
- * Calculate Exponential Moving Average
- */
-export const calculateEMA = (prices: number[], period: number): number[] => {
-  const alpha = 2 / (period + 1);
-  const ema = [prices[0]];
-  
-  for (let i = 1; i < prices.length; i++) {
-    ema.push(alpha * prices[i] + (1 - alpha) * ema[i - 1]);
-  }
-  return ema;
-};
-
-/**
- * Calculate volatility (standard deviation of returns)
- */
-export const calculateVolatility = (prices: number[], period: number): number[] => {
-  const volatility = [];
-  
-  for (let i = 0; i < prices.length; i++) {
-    if (i < period - 1) {
-      volatility.push(0);
-    } else {
-      const slice = prices.slice(i - period + 1, i + 1);
-      const returns = [];
-      for (let j = 1; j < slice.length; j++) {
-        returns.push((slice[j] - slice[j - 1]) / slice[j - 1]);
-      }
-      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
-      const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
-      volatility.push(Math.sqrt(variance));
-    }
-  }
-  return volatility;
-};
-
-/**
- * Process raw market data into features for ML models
- */
-export const processMarketData = (data: MarketData[]): ProcessedFeatures[] => {
-  const prices = data.map(d => d.close);
-  const volumes = data.map(d => d.volume);
-  
-  const sma7 = calculateSMA(prices, 7);
-  const sma14 = calculateSMA(prices, 14);
-  const sma30 = calculateSMA(prices, 30);
-  const ema10 = calculateEMA(prices, 10);
-  const ema30 = calculateEMA(prices, 30);
-  const volatility = calculateVolatility(prices, 14);
-  
-  return data.map((item, index) => ({
-    price: item.close,
-    sma7: sma7[index],
-    sma14: sma14[index],
-    sma30: sma30[index],
-    ema10: ema10[index],
-    ema30: ema30[index],
-    volatility: volatility[index],
-    momentum: index >= 14 ? item.close - prices[index - 14] : 0,
-    volume: item.volume,
-    priceChange: index > 0 ? (item.close - prices[index - 1]) / prices[index - 1] : 0,
-    volumeChange: index > 0 ? (item.volume - volumes[index - 1]) / volumes[index - 1] : 0,
-  }));
-};
+// Re-export preprocessing functions for backward compatibility
+export { processMarketData, calculateSMA, calculateEMA, calculateVolatility };
 
 /**
  * LSTM Model for Price Prediction

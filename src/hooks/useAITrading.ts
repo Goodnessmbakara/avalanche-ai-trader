@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AITradingSystem, ProcessedFeatures } from '@/utils/aiModels';
-import { collectHistoricalData, preprocessData, initLiveDataStream, isStreamingActive, getStreamingStatus, startPriceStreaming, startSubgraphStreaming, stopStreaming } from '@/utils/dataCollection';
-import { processMarketData } from '@/utils/aiModels';
+import { collectHistoricalData, initLiveDataStream, isStreamingActive, getStreamingStatus, startPriceStreaming, startSubgraphStreaming, stopStreaming } from '@/utils/dataCollection';
+import { processMarketData, preprocessData } from '@/utils/dataPreprocessing';
 import { StreamingEventType } from '@/shared/types';
 
 /**

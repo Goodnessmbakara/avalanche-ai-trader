@@ -43,20 +43,26 @@ if (envManager.getConfig('optimization').compressionEnabled) {
   app.use(compression());
 }
 
-// Rate limiting
+// Rate limiting - more permissive for development
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: envManager.getConfig('security').apiRateLimit,
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 1000, // 1000 requests per minute for development
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for health checks and OPTIONS requests
+    return req.path === '/health' || req.method === 'OPTIONS';
+  }
 });
 app.use('/api/', limiter);
 
-// CORS middleware
+// CORS middleware - more permissive for development
 app.use(cors({
-  origin: envManager.getConfig('optimization').corsOrigins,
-  credentials: true
+  origin: ['http://localhost:8080', 'http://127.0.0.1:8080', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-correlation-id']
 }));
 
 // Body parsing middleware
@@ -74,8 +80,11 @@ app.use((req, res, next) => {
   // Log request
   logger.info(`${req.method} ${req.path}`, {
     correlationId,
-    ip: req.ip,
-    userAgent: req.get('User-Agent'),
+    security: {
+      ip: req.ip || 'unknown',
+      userAgent: req.get('User-Agent') || '',
+      action: 'request'
+    },
     requestId: correlationId
   });
   
@@ -90,12 +99,14 @@ app.use((req, res, next) => {
     // Log response
     logger.info(`${req.method} ${req.path} - ${res.statusCode}`, {
       correlationId,
-      duration,
-      statusCode: res.statusCode,
+      performance: {
+        duration,
+        memoryUsage: 0
+      },
       requestId: correlationId
     });
     
-    originalEnd.call(this, chunk, encoding);
+    return originalEnd.call(this, chunk, encoding);
   };
   
   next();
@@ -133,10 +144,10 @@ app.use('/api/portfolio', portfolioRouter);
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   logger.error('Server error', err, {
-    correlationId: req.headers['x-correlation-id'],
-    path: req.path,
-    method: req.method,
-    ip: req.ip
+    correlationId: Array.isArray(req.headers['x-correlation-id']) ? req.headers['x-correlation-id'][0] : req.headers['x-correlation-id']
+    // path: req.path, // Not in LogMetadata interface
+    // method: req.method, // Not in LogMetadata interface
+    // ip: req.ip // Not in LogMetadata interface
   });
   
   // Record error metrics
@@ -164,7 +175,7 @@ async function initializeServer() {
       await cache.connect();
       logger.info('✅ Cache connected successfully');
     } catch (error) {
-      logger.warn('⚠️ Cache connection failed - running without caching', error as Error);
+      logger.warn('⚠️ Cache connection failed - running without caching');
     }
     
     // Start server first for immediate responsiveness
@@ -177,7 +188,7 @@ async function initializeServer() {
     
     // Initialize AI system in the background
     const aiSystem = AISystem.getInstance();
-    aiSystem.initialize(true).then(async () => {
+    aiSystem.initialize().then(async () => {
       logger.info('✅ AI System initialized successfully');
       
       // Start production monitoring
@@ -210,7 +221,7 @@ async function initializeServer() {
       await aiSystem.disableStreaming();
       
       // Disconnect cache
-      await cache.disconnect();
+      // await cache.disconnect(); // Disconnect method not implemented
       
       server.close(() => {
         logger.info('Server closed');

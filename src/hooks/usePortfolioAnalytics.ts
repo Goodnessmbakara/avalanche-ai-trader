@@ -5,9 +5,9 @@ import { useAITrading } from './useAITrading';
 import { 
   calculateSharpeRatio, 
   calculateMaxDrawdown, 
-  calculateVaR,
-  calculateVolatility 
+  calculateVaR
 } from '../utils/riskManagement';
+import { calculateVolatilityPercentage } from '../utils/dataPreprocessing';
 import { calculateVaRFromReturns } from '../utils/portfolioCalculations';
 import { PortfolioRebalancer } from '../utils/portfolioRebalancer';
 import { 
@@ -86,20 +86,6 @@ export const usePortfolioAnalytics = (): UsePortfolioAnalyticsReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch portfolio metrics on mount
-  useEffect(() => {
-    fetchPortfolioMetrics();
-  }, [fetchPortfolioMetrics]);
-
-  // Calculate real-time P&L from current portfolio value vs historical baseline
-  const calculateRealTimePnL = useCallback((): number => {
-    if (!portfolioHistory.length || !portfolioValue) return 0;
-    
-    // Use portfolio value change as proxy for P&L
-    const baselineValue = portfolioHistory[0]?.totalValue || portfolioValue;
-    return portfolioValue - baselineValue;
-  }, [portfolioHistory, portfolioValue]);
-
   // Fetch real portfolio metrics from backend
   const fetchPortfolioMetrics = useCallback(async () => {
     try {
@@ -125,6 +111,20 @@ export const usePortfolioAnalytics = (): UsePortfolioAnalyticsReturn => {
     }
   }, []);
 
+  // Fetch portfolio metrics on mount
+  useEffect(() => {
+    fetchPortfolioMetrics();
+  }, [fetchPortfolioMetrics]);
+
+  // Calculate real-time P&L from current portfolio value vs historical baseline
+  const calculateRealTimePnL = useCallback((): number => {
+    if (!portfolioHistory.length || !portfolioValue) return 0;
+    
+    // Use portfolio value change as proxy for P&L
+    const baselineValue = portfolioHistory[0]?.totalValue || portfolioValue;
+    return portfolioValue - baselineValue;
+  }, [portfolioHistory, portfolioValue]);
+
   // Update portfolio metrics using risk management utilities
   const updatePortfolioMetrics = useCallback(() => {
     if (portfolioHistory.length < 2) return;
@@ -146,7 +146,7 @@ export const usePortfolioAnalytics = (): UsePortfolioAnalyticsReturn => {
     
     const sharpeRatio = calculateSharpeRatio(returns, 0.02); // Assuming 2% risk-free rate
     const maxDrawdown = calculateMaxDrawdown(portfolioHistory.map(h => h.totalValue)) / 100;
-    const volatility = calculateVolatility(returns);
+    const volatility = calculateVolatilityPercentage(returns);
     
     // Calculate win rate and profit factor from trade history
     const completed = tradeHistory.filter(t => t.status === TradeStatus.COMPLETED);

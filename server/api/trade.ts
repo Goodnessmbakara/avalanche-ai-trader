@@ -47,7 +47,8 @@ router.post('/', async (req, res) => {
     const aiSystem = AISystem.getInstance();
     
     // Get trading decision
-    const decision = aiSystem.getDecision(features, portfolioRatio);
+    const featureArray = Object.values(features).map(v => typeof v === 'number' ? v : 0);
+    const decision = aiSystem.getDecision(featureArray, portfolioRatio);
     
     const response: TradeResponse = {
       action: decision.action as 'BUY' | 'SELL' | 'HOLD',

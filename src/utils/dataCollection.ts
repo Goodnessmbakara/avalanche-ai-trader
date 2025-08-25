@@ -432,77 +432,23 @@ export const generateMockData = (
   return data;
 };
 
+import { preprocessData as preprocessDataFromModule, generateMockData as generateMockDataFromModule } from './dataPreprocessing';
+
 /**
  * Data preprocessing utilities
+ * @deprecated Use preprocessData from './dataPreprocessing' instead
  */
 export const preprocessData = (rawData: MarketDataPoint[]): MarketDataPoint[] => {
   // Validate input data
   if (!rawData || rawData.length === 0) {
     console.warn('No data provided for preprocessing, generating mock data');
-    return generateMockData(
+    return generateMockDataFromModule(
       Math.floor(Date.now() / 1000) - (30 * 24 * 60 * 60), // 30 days ago
       Math.floor(Date.now() / 1000) // now
     );
   }
 
-  console.log(`Preprocessing ${rawData.length} data points`);
-
-  // Remove outliers using Z-score method
-  const removeOutliers = (data: MarketDataPoint[], field: keyof MarketDataPoint): MarketDataPoint[] => {
-    if (data.length === 0) return data;
-    
-    const values = data.map(d => d[field] as number).filter(v => !isNaN(v) && isFinite(v));
-    if (values.length === 0) return data;
-    
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    const std = Math.sqrt(values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length);
-    
-    if (std === 0) return data; // No variation, return original data
-    
-    return data.filter(d => {
-      const value = d[field] as number;
-      if (isNaN(value) || !isFinite(value)) return false;
-      const zScore = Math.abs((value - mean) / std);
-      return zScore < 3; // Keep data within 3 standard deviations
-    });
-  };
-
-  // Handle missing values with linear interpolation
-  const interpolateMissing = (data: MarketDataPoint[]): MarketDataPoint[] => {
-    if (data.length === 0) return data;
-    
-    const interpolated = [...data];
-    
-    for (let i = 1; i < interpolated.length - 1; i++) {
-      if (interpolated[i].price === 0 || isNaN(interpolated[i].price)) {
-        const prevPrice = interpolated[i - 1]?.price;
-        const nextPrice = interpolated[i + 1]?.price;
-        if (prevPrice && nextPrice && !isNaN(prevPrice) && !isNaN(nextPrice)) {
-          interpolated[i].price = (prevPrice + nextPrice) / 2;
-        } else {
-          interpolated[i].price = prevPrice || nextPrice || 40; // fallback to $40
-        }
-      }
-    }
-    
-    return interpolated;
-  };
-
-  // Apply preprocessing steps
-  let processedData = removeOutliers(rawData, 'price');
-  processedData = removeOutliers(processedData, 'volume');
-  processedData = interpolateMissing(processedData);
-
-  // Final validation
-  if (processedData.length === 0) {
-    console.warn('All data was filtered out during preprocessing, using original data');
-    return rawData;
-  }
-
-  const sortedData = processedData.sort((a, b) => a.timestamp - b.timestamp);
-  console.log(`Preprocessing complete: ${sortedData.length} data points remaining`);
-  
-  return sortedData;
+  return preprocessDataFromModule(rawData);
 };
 
 /**

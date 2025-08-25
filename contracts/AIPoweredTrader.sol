@@ -261,7 +261,7 @@ contract AIPoweredTrader is Ownable, ReentrancyGuard, Pausable {
         emit EmergencyWithdraw(token, balance, recipient);
     }
 
-    /**
+    /**x
      * @dev Pause trading (owner only)
      */
     function pause() external onlyOwner {

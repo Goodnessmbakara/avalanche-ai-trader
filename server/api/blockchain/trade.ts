@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { initializeWeb3Server, executeAITrade, validatePredictionForTrade, getServerAccount, getServerAvaxBalance, getServerTokenBalance } from '../../libs/web3Server';
+import { Web3Server } from '../../libs/web3Server';
 import { BlockchainTradeRequest, BlockchainTradeResponse } from '../../types/api';
 
 const router = Router();
@@ -39,55 +39,40 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Initialize Web3 connection
-    const web3 = initializeWeb3Server();
+    // Initialize Web3 server
+    const web3Server = Web3Server.getInstance();
+    await web3Server.initialize();
     
-    // Check if server account is configured
-    const account = getServerAccount(web3);
-    if (!account) {
-      return res.status(500).json({
-        error: 'Server configuration error',
-        message: 'No server account configured. Please set BACKEND_PRIVATE_KEY environment variable.',
-        timestamp: Date.now()
-      });
-    }
+    // Execute the trade using the new Web3Server interface
+    const tradeParams = {
+      tokenIn: fromToken,
+      tokenOut: toToken,
+      amountIn: amount,
+      amountOutMin: (parseFloat(amount) * (1 - slippage / 100)).toString(),
+      deadline: Math.floor(Date.now() / 1000) + 1200, // 20 minutes
+      tradeType: fromToken === '0x0000000000000000000000000000000000000000' ? 'AVAX_TO_TOKEN' : 
+                 toToken === '0x0000000000000000000000000000000000000000' ? 'TOKEN_TO_AVAX' : 'TOKEN_TO_TOKEN'
+    };
     
-    console.log(`🔐 Using server account: ${account}`);
+    // For now, we'll use a placeholder user address - in production this would come from authentication
+    const userAddress = '0x0000000000000000000000000000000000000000'; // Placeholder
     
-    // Validate prediction and balances before executing trade
-    const validation = await validatePredictionForTrade(web3, fromToken, toToken, amount);
-    if (!validation.isValid) {
+    const result = await web3Server.executeTrade(tradeParams as any, userAddress);
+    
+    if (!result.success) {
       return res.status(400).json({
-        error: 'Trade validation failed',
-        message: validation.reason || 'Trade validation failed',
-        timestamp: Date.now()
-      });
-    }
-    
-    // Get current balances for logging
-    const avaxBalance = await getServerAvaxBalance(web3);
-    const tokenBalance = await getServerTokenBalance(web3, fromToken);
-    
-    console.log(`💰 Current balances - AVAX: ${avaxBalance.toFixed(4)}, Token: ${tokenBalance.toFixed(4)}`);
-    console.log(`📊 Executing trade: ${amount} ${fromToken} → ${toToken} (slippage: ${slippage}%)`);
-    
-    // Execute the trade
-    const txHash = await executeAITrade(web3, fromToken, toToken, amount, slippage);
-    
-    if (!txHash) {
-      return res.status(500).json({
         error: 'Trade execution failed',
-        message: 'Failed to execute trade on blockchain',
+        message: result.error || 'Failed to execute trade',
         timestamp: Date.now()
       });
     }
     
     const response: BlockchainTradeResponse = {
-      txHash,
+      txHash: result.txHash!,
       timestamp: Date.now()
     };
     
-    console.log(`✅ Trade executed successfully: ${txHash}`);
+    console.log(`✅ Trade executed successfully: ${result.txHash}`);
     
     res.json(response);
   } catch (error: any) {
@@ -105,15 +90,14 @@ router.post('/', async (req, res) => {
  * GET /api/blockchain/status
  * Get blockchain connection and account status
  */
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   try {
-    const web3 = initializeWeb3Server();
-    const account = getServerAccount(web3);
+    const web3Server = Web3Server.getInstance();
+    const status = web3Server.getConnectionStatus();
     
     res.json({
-      connected: !!web3,
-      accountConfigured: !!account,
-      accountAddress: account || null,
+      connected: status.connected,
+      networkId: status.networkId,
       network: process.env.BACKEND_NETWORK || 'fuji',
       timestamp: Date.now()
     });
@@ -134,18 +118,18 @@ router.get('/status', (req, res) => {
  */
 router.get('/balances', async (req, res) => {
   try {
-    const web3 = initializeWeb3Server();
-    const account = getServerAccount(web3);
+    const web3Server = Web3Server.getInstance();
+    const { account } = req.query;
     
-    if (!account) {
-      return res.status(500).json({
-        error: 'No account configured',
-        message: 'Server account not configured',
+    if (!account || typeof account !== 'string') {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'Account address is required',
         timestamp: Date.now()
       });
     }
     
-    const avaxBalance = await getServerAvaxBalance(web3);
+    const avaxBalance = await web3Server.getTokenBalance('0x0000000000000000000000000000000000000000', account);
     
     res.json({
       account,

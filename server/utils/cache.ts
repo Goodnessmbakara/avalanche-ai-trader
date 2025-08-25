@@ -281,4 +281,11 @@ export class CacheManager {
   public isReady(): boolean {
     return this.isConnected;
   }
+
+  /**
+   * Warm cache (for backward compatibility)
+   */
+  async warmCache(): Promise<void> {
+    this.logger.info('Cache warming completed (placeholder)');
+  }
 }

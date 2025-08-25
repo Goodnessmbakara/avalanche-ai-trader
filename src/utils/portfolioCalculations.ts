@@ -11,9 +11,9 @@ import {
 import { 
   calculateSharpeRatio, 
   calculateMaxDrawdown, 
-  calculateVaR,
-  calculateVolatility 
+  calculateVaR
 } from './riskManagement';
+import { calculateVolatilityPercentage } from './dataPreprocessing';
 
 /**
  * Calculate Value at Risk (VaR) from historical returns using percentile method
@@ -97,7 +97,7 @@ export function calculateRollingMetrics(
     }).slice(1);
     
     const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-    const volatility = calculateVolatility(returns);
+    const volatility = calculateVolatilityPercentage(returns);
     const sharpe = volatility > 0 ? (avgReturn - 0.02) / volatility : 0; // 2% risk-free rate
     
     rollingReturns.push(avgReturn);
@@ -213,7 +213,7 @@ export function calculateRiskAdjustedReturns(
   }
   
   const avgReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-  const volatility = calculateVolatility(returns);
+  const volatility = calculateVolatilityPercentage(returns);
   
   // Sharpe ratio
   const sharpeRatio = volatility > 0 ? (avgReturn - riskFreeRate) / volatility : 0;
@@ -419,8 +419,8 @@ function calculateBeta(portfolioReturns: number[], benchmarkReturns: number[]): 
   if (portfolioReturns.length !== benchmarkReturns.length || portfolioReturns.length === 0) return 0;
   
   const correlation = calculateCorrelation(portfolioReturns, benchmarkReturns);
-  const portfolioVolatility = calculateVolatility(portfolioReturns);
-  const benchmarkVolatility = calculateVolatility(benchmarkReturns);
+  const portfolioVolatility = calculateVolatilityPercentage(portfolioReturns);
+  const benchmarkVolatility = calculateVolatilityPercentage(benchmarkReturns);
   
   return benchmarkVolatility > 0 ? (correlation * portfolioVolatility) / benchmarkVolatility : 0;
 }

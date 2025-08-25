@@ -114,7 +114,7 @@ portfolioRouter.get('/history', async (req, res) => {
     }
 
     // Convert to portfolio history format
-    const portfolioHistory = historicalData.slice(-30).map((data, index) => ({
+    const portfolioHistory = historicalData.slice(-30).map((data: any, index: number) => ({
       timestamp: data.timestamp,
       totalValue: data.price * 100, // Assuming 100 AVAX portfolio
       totalReturn: (data.price / historicalData[0].price - 1) * 100,
