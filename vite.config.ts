@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => ({
       },
       // Catch-all backend proxy for all other /api routes
       '/api': {
-        target: `http://localhost:${process.env.BACKEND_PORT || 5000}`,
+        target: `http://localhost:${process.env.BACKEND_PORT || 5001}`,
         changeOrigin: true,
         configure: (proxy, options) => {
           proxy.on('error', (err, req, res) => {
