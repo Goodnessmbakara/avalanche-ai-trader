@@ -60,10 +60,10 @@ interface TradingHistoryData {
 
 // Mock trading history data as fallback
 const generateMockTradingHistory = (): TradingHistoryData => {
-  // Generate dates for the last 3-4 months in 2025 (approximately 90-120 days)
+  // Generate dates for the last 3-4 months in 2025 (May to August 2025)
   const generateRecentDates = () => {
     const dates = [];
-    const now = new Date('2025-10-15'); // Assuming today is October 15, 2025
+    const now = new Date('2025-08-15'); // Today is August 15, 2025
     
     // Generate 10 recent dates, starting from 3-4 months ago
     for (let i = 0; i < 10; i++) {

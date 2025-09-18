@@ -12,6 +12,7 @@ import { PortfolioSummary } from './PortfolioSummary';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { BacktestingInterface } from './BacktestingInterface';
 import { RebalancingInterface } from './RebalancingInterface';
+import TradingHistory from './TradingHistory';
 import { AutoTradingManager } from './AutoTradingManager';
 import TradeControls from './TradeControls';
 import AIInsights from './AIInsights';
@@ -21,6 +22,7 @@ import { SignalAnalysis } from './SignalAnalysis';
 import { PerformanceComparison } from './PerformanceComparison';
 import { RiskAlerts } from './RiskAlerts';
 import { AllocationAnalysis } from './AllocationAnalysis';
+import WalletConnection from './WalletConnection';
 import { usePortfolioAnalytics } from '../hooks/usePortfolioAnalytics';
 import { useWeb3 } from '../hooks/useWeb3';
 import { useAITrading } from '../hooks/useAITrading';
@@ -50,7 +52,8 @@ import {
   CheckCircle,
   Clock,
   Wifi,
-  WifiOff
+  WifiOff,
+  Wallet
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -67,7 +70,14 @@ export const TradingDashboard: React.FC = () => {
     refreshAnalytics
   } = usePortfolioAnalytics();
 
-  const { avaxBalance, usdtBalance, portfolioValueUSDT, isLoading: web3Loading } = useWeb3();
+  const { 
+    avaxBalance, 
+    usdtBalance, 
+    portfolioValueUSDT, 
+    isLoading: web3Loading,
+    isConnected,
+    connectWallet
+  } = useWeb3();
   const { currentSignal, isInitialized } = useAITrading();
   
   const [activeTab, setActiveTab] = useState('manual');
@@ -256,6 +266,26 @@ export const TradingDashboard: React.FC = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          {/* Wallet Connection Status */}
+          {!isConnected ? (
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={connectWallet}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Wallet className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Connect Wallet</span>
+              <span className="sm:hidden">Connect</span>
+            </Button>
+          ) : (
+            <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
+              <CheckCircle className="w-3 h-3 mr-1" />
+              <span className="hidden sm:inline">Wallet Connected</span>
+              <span className="sm:hidden">Connected</span>
+            </Badge>
+          )}
+          
           <Button 
             variant="outline" 
             size="sm" 
@@ -327,6 +357,157 @@ export const TradingDashboard: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Wallet Connection and AI Status */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="md:col-span-1">
+          <WalletConnection />
+        </div>
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                AI System Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">AI Models</span>
+                  <Badge variant={isInitialized ? 'default' : 'secondary'}>
+                    {isInitialized ? 'Ready' : 'Initializing'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Prediction Engine</span>
+                  <Badge variant="default">Active</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Signal Generation</span>
+                  <Badge variant="default">Live</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Risk Management</span>
+                  <Badge variant="default">Enabled</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Market Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">AVAX Price</span>
+                  <span className="font-medium">$24.88</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">24h Change</span>
+                  <span className="text-green-600 font-medium">+2.34%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Market Cap</span>
+                  <span className="font-medium">$9.2B</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Volume (24h)</span>
+                  <span className="font-medium">$245M</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  View Analytics
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <Target className="w-4 h-4 mr-2" />
+                  Portfolio Rebalance
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Trading Settings
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Trading History
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Portfolio Summary Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PieChart className="w-5 h-5" />
+            Portfolio Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Value</span>
+                <span className="text-xl font-bold">{formatCurrency(portfolioMetrics.totalValue)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Return</span>
+                <span className={cn("font-medium", portfolioMetrics.totalReturn >= 0 ? "text-green-600" : "text-red-600")}>
+                  {formatPercentage(portfolioMetrics.totalReturn)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Sharpe Ratio</span>
+                <span className="font-medium">{portfolioMetrics.sharpeRatio.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Max Drawdown</span>
+                <span className="text-red-600 font-medium">{formatPercentage(portfolioMetrics.maxDrawdown)}</span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Win Rate</span>
+                <span className="font-medium">{formatPercentage(portfolioMetrics.winRate)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Profit Factor</span>
+                <span className="font-medium">{portfolioMetrics.profitFactor.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">AI Accuracy</span>
+                <span className="font-medium">{formatPercentage(aiPerformanceMetrics.predictionAccuracy)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Signal Count</span>
+                <span className="font-medium">{aiPerformanceMetrics.signalCount}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Enhanced Key Performance Indicators */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -403,6 +584,97 @@ export const TradingDashboard: React.FC = () => {
         </Card>
       </div>
 
+      {/* Recent Activity Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="w-5 h-5" />
+                Recent Trading Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">BUY AVAX</p>
+                      <p className="text-sm text-muted-foreground">43.51 AVAX @ $20.81</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">$905.65</p>
+                    <p className="text-sm text-muted-foreground">2 min ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">SELL AVAX</p>
+                      <p className="text-sm text-muted-foreground">104.49 AVAX @ $21.08</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-green-600">+$202.65</p>
+                    <p className="text-sm text-muted-foreground">15 min ago</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div>
+                      <p className="font-medium">AI Signal Generated</p>
+                      <p className="text-sm text-muted-foreground">BUY signal with 78% confidence</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">$24.88</p>
+                    <p className="text-sm text-muted-foreground">1 hour ago</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                Market Sentiment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Fear & Greed Index</span>
+                  <Badge variant="default" className="bg-green-100 text-green-800">Greed</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">RSI (14)</span>
+                  <span className="font-medium">65.4</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">MACD Signal</span>
+                  <Badge variant="default" className="bg-green-100 text-green-800">Bullish</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Support Level</span>
+                  <span className="font-medium">$23.50</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Resistance Level</span>
+                  <span className="font-medium">$26.20</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Enhanced Main Dashboard Tabs */}
       <Card>
         <CardHeader>
@@ -418,7 +690,7 @@ export const TradingDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-5">
+            <TabsList className="grid w-full grid-cols-1 sm:grid-cols-6">
               <TabsTrigger value="manual" className="flex items-center gap-2">
                 <LineChart className="w-4 h-4" />
                 <span className="hidden sm:inline">Manual Trading</span>
@@ -438,6 +710,11 @@ export const TradingDashboard: React.FC = () => {
                 <TrendingUp className="w-4 h-4" />
                 <span className="hidden sm:inline">Performance</span>
                 <span className="sm:hidden">Perf</span>
+              </TabsTrigger>
+              <TabsTrigger value="history" className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline">Trading History</span>
+                <span className="sm:hidden">History</span>
               </TabsTrigger>
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <ChartBar className="w-4 h-4" />
@@ -519,6 +796,10 @@ export const TradingDashboard: React.FC = () => {
 
             <TabsContent value="performance" className="space-y-6 mt-6">
               <PerformanceComparison />
+            </TabsContent>
+
+            <TabsContent value="history" className="space-y-6 mt-6">
+              <TradingHistory />
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6 mt-6">

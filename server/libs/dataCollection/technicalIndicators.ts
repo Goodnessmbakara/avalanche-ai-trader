@@ -154,3 +154,10 @@ function calculateVolumeSMA(data: MarketDataPoint[], currentIndex: number, perio
   return volumes.reduce((sum, volume) => sum + volume, 0) / volumes.length;
 }
 
+
+
+
+
+
+
+

@@ -36,6 +36,7 @@ export const useWeb3 = () => {
   const [avaxBalance, setAvaxBalance] = useState(0);
   const [usdtBalance, setUsdtBalance] = useState(0);
   const [networkId, setNetworkId] = useState<string | null>(null);
+  const [isAvalancheNetwork, setIsAvalancheNetwork] = useState(false);
   
   // Trading state
   const [isTrading, setIsTrading] = useState(false);
@@ -46,6 +47,32 @@ export const useWeb3 = () => {
   const [tradeHistory, setTradeHistory] = useState<TradeResult[]>([]);
   const [portfolioValueUSDT, setPortfolioValueUSDT] = useState<number>(0);
   const [avaxPriceUSDT, setAvaxPriceUSDT] = useState<number>(25); // Default price, will be updated
+
+  // Load balances for connected account
+  const loadBalances = useCallback(async (web3Instance: Web3, userAccount: string) => {
+    try {
+      const avaxBal = await getAvaxBalance(web3Instance, userAccount);
+      setAvaxBalance(avaxBal);
+      
+      // Get USDT balance
+      const usdtAddress = resolveTokenAddress('USDT', parseInt(networkId || '43113'));
+      const usdtBal = await getTokenBalance(web3Instance, usdtAddress, userAccount);
+      setUsdtBalance(usdtBal);
+      
+      // Calculate portfolio value
+      const portfolioValue = avaxBal * avaxPriceUSDT + usdtBal;
+      setPortfolioValueUSDT(portfolioValue);
+    } catch (error) {
+      console.error('Failed to load balances:', error);
+    }
+  }, [networkId, avaxPriceUSDT]);
+
+  // Check if current network is Avalanche
+  const checkAvalancheNetwork = useCallback((netId: string) => {
+    const isAvalanche = netId === '43114' || netId === '43113'; // Mainnet or Fuji testnet
+    setIsAvalancheNetwork(isAvalanche);
+    return isAvalanche;
+  }, []);
 
   // Initialize Web3 and connect wallet
   const connectWallet = useCallback(async () => {
@@ -62,10 +89,19 @@ export const useWeb3 = () => {
           
           // Get network ID
           const netId = await web3Instance.eth.net.getId();
-          setNetworkId(netId.toString());
+          const netIdString = netId.toString();
+          setNetworkId(netIdString);
+          
+          // Check if on Avalanche network
+          const isAvalanche = checkAvalancheNetwork(netIdString);
           
           // Load balances
           await loadBalances(web3Instance, userAccount);
+          
+          // If not on Avalanche, prompt to switch
+          if (!isAvalanche) {
+            console.log('Not on Avalanche network, prompting to switch...');
+          }
         }
       }
     } catch (error) {
@@ -73,7 +109,7 @@ export const useWeb3 = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadBalances, checkAvalancheNetwork]);
 
   // Disconnect wallet
   const disconnectWallet = useCallback(() => {
@@ -83,6 +119,7 @@ export const useWeb3 = () => {
     setAvaxBalance(0);
     setUsdtBalance(0);
     setNetworkId(null);
+    setIsAvalancheNetwork(false);
     setLastTradeHash(null);
     setTradeError(null);
     setGasEstimate(null);
@@ -96,48 +133,24 @@ export const useWeb3 = () => {
       const success = await switchToAvalanche(testnet);
       if (success && web3) {
         const netId = await web3.eth.net.getId();
-        setNetworkId(netId.toString());
+        const netIdString = netId.toString();
+        setNetworkId(netIdString);
         
-        if (account) {
+        const isAvalanche = checkAvalancheNetwork(netIdString);
+        if (isAvalanche && account) {
           await loadBalances(web3, account);
         }
+        
+        return success;
       }
-      return success;
+      return false;
     } catch (error) {
       console.error('Failed to switch network:', error);
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [web3, account]);
-
-  // Load token balances
-  const loadBalances = useCallback(async (web3Instance: Web3, userAccount: string) => {
-    try {
-      const chainId = Number(await web3Instance.eth.getChainId());
-      const usdtAddress = resolveTokenAddress('USDT', chainId);
-      
-      const [avax, usdt] = await Promise.all([
-        getAvaxBalance(web3Instance, userAccount),
-        getTokenBalance(web3Instance, usdtAddress, userAccount),
-      ]);
-      
-      setAvaxBalance(avax);
-      setUsdtBalance(usdt);
-      
-      // Calculate normalized portfolio value in USDT
-      const portfolioValue = await getPortfolioValueInUSDT(web3Instance, avax, usdt, chainId);
-      setPortfolioValueUSDT(portfolioValue);
-      
-      // Extract AVAX price from portfolio calculation (assuming it's available)
-      // In a real implementation, this would come from a price oracle
-      const avaxValue = portfolioValue - usdt;
-      const avaxPrice = avax > 0 ? avaxValue / avax : 25; // Fallback to $25 if no AVAX
-      setAvaxPriceUSDT(avaxPrice);
-    } catch (error) {
-      console.error('Failed to load balances:', error);
-    }
-  }, []);
+  }, [web3, account, loadBalances, checkAvalancheNetwork]);
 
   // Refresh balances
   const refreshBalances = useCallback(async () => {
@@ -442,44 +455,49 @@ export const useWeb3 = () => {
 
   // Listen for account changes
   useEffect(() => {
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts: string[]) => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const handleAccountsChanged = async (accounts: string[]) => {
         if (accounts.length === 0) {
+          // User disconnected
           disconnectWallet();
-        } else if (accounts[0] !== account) {
-          setAccount(accounts[0]);
-          if (web3) {
-            loadBalances(web3, accounts[0]);
-          }
+        } else if (web3) {
+          // Account changed
+          const newAccount = accounts[0];
+          setAccount(newAccount);
+          await loadBalances(web3, newAccount);
         }
       };
 
-      const handleChainChanged = (chainId: string) => {
-        setNetworkId(parseInt(chainId, 16).toString());
-        if (web3 && account) {
-          loadBalances(web3, account);
-        }
+      const handleChainChanged = async (chainId: string) => {
+        // Reload the page when chain changes
+        window.location.reload();
       };
 
-      (window.ethereum as any).on('accountsChanged', handleAccountsChanged);
-      (window.ethereum as any).on('chainChanged', handleChainChanged);
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
 
       return () => {
-        if (window.ethereum) {
-          (window.ethereum as any).removeListener('accountsChanged', handleAccountsChanged);
-          (window.ethereum as any).removeListener('chainChanged', handleChainChanged);
-        }
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
       };
     }
-  }, [web3, account, disconnectWallet, loadBalances]);
+  }, [web3, disconnectWallet, loadBalances]);
 
-  // Auto-connect if previously connected
+  // Auto-connect on mount if previously connected
   useEffect(() => {
     const autoConnect = async () => {
-      if (window.ethereum && localStorage.getItem('walletConnected') === 'true') {
-        await connectWallet();
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            await connectWallet();
+          }
+        } catch (error) {
+          console.error('Auto-connect failed:', error);
+        }
       }
     };
+
     autoConnect();
   }, [connectWallet]);
 
@@ -491,9 +509,6 @@ export const useWeb3 = () => {
       localStorage.removeItem('walletConnected');
     }
   }, [isConnected]);
-
-  // Check if connected to Avalanche
-  const isAvalancheNetwork = networkId === '43114' || networkId === '43113'; // Mainnet or Fuji
 
   return {
     web3,

@@ -2,8 +2,17 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWeb3 } from "@/hooks/useWeb3";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Wallet, 
+  AlertTriangle, 
+  CheckCircle, 
+  RefreshCw, 
+  ExternalLink,
+  Info
+} from "lucide-react";
 
 /**
  * Wallet Connection Component
@@ -31,8 +40,19 @@ const WalletConnection: React.FC = () => {
       if (typeof window.ethereum === "undefined") {
         toast({
           title: "MetaMask Not Found",
-          description:
-            "Please install MetaMask extension to connect your wallet.",
+          description: (
+            <div className="space-y-2">
+              <p>Please install MetaMask extension to connect your wallet.</p>
+              <a 
+                href="https://metamask.io/download/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-blue-600 underline flex items-center gap-1"
+              >
+                Download MetaMask <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          ),
           variant: "destructive",
         });
         return;
@@ -56,8 +76,9 @@ const WalletConnection: React.FC = () => {
       } else if (error.code === -32002) {
         errorMessage = "Please check MetaMask for pending connection request.";
       } else if (error.message?.includes("already pending")) {
-        errorMessage =
-          "Connection request already pending. Please check MetaMask.";
+        errorMessage = "Connection request already pending. Please check MetaMask.";
+      } else if (error.message?.includes("User rejected")) {
+        errorMessage = "Connection was rejected. Please try again.";
       }
 
       toast({
@@ -79,8 +100,7 @@ const WalletConnection: React.FC = () => {
       } else {
         toast({
           title: "Network Switch Failed",
-          description:
-            "Failed to switch to Avalanche network. Please try manually.",
+          description: "Failed to switch to Avalanche network. Please try manually.",
           variant: "destructive",
         });
       }
@@ -107,31 +127,53 @@ const WalletConnection: React.FC = () => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
+  const formatBalance = (balance: number, decimals: number = 4) => {
+    return balance.toFixed(decimals);
+  };
+
   if (!isConnected) {
     return (
       <Card className="bg-card border-border shadow-card-trading">
         <CardHeader>
-          <CardTitle className="text-center text-card-foreground">
+          <CardTitle className="text-center text-card-foreground flex items-center justify-center gap-2">
+            <Wallet className="w-5 h-5" />
             Connect Your Wallet
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center text-muted-foreground">
-            Connect your MetaMask wallet to start AI-powered trading on
-            Avalanche
+            Connect your MetaMask wallet to start AI-powered trading on Avalanche
           </div>
+          
           <Button
             onClick={handleConnect}
             disabled={isLoading}
             className="w-full bg-gradient-primary hover:opacity-90"
             size="lg"
           >
-            {isLoading ? "Connecting..." : "Connect MetaMask"}
+            {isLoading ? (
+              <>
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect MetaMask
+              </>
+            )}
           </Button>
-          <div className="text-xs text-muted-foreground text-center space-y-1">
-            <div>Make sure you have MetaMask installed and unlocked</div>
-            <div>Click the button above to connect your wallet</div>
-          </div>
+          
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              <div className="space-y-1">
+                <div>• Make sure you have MetaMask installed and unlocked</div>
+                <div>• Click the button above to connect your wallet</div>
+                <div>• You'll be prompted to switch to Avalanche network</div>
+              </div>
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -141,10 +183,13 @@ const WalletConnection: React.FC = () => {
     <Card className="bg-card border-border shadow-card-trading">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span className="text-card-foreground">Wallet Connected</span>
+          <span className="text-card-foreground flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-500" />
+            Wallet Connected
+          </span>
           <Badge
             variant={isAvalancheNetwork ? "default" : "destructive"}
-            className={isAvalancheNetwork ? "bg-profit" : ""}
+            className={isAvalancheNetwork ? "bg-green-500" : ""}
           >
             {isAvalancheNetwork ? "Avalanche" : "Wrong Network"}
           </Badge>
@@ -155,7 +200,7 @@ const WalletConnection: React.FC = () => {
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Account</span>
-            <span className="text-foreground font-mono">
+            <span className="text-foreground font-mono text-sm">
               {account ? formatAddress(account) : ""}
             </span>
           </div>
@@ -163,23 +208,33 @@ const WalletConnection: React.FC = () => {
 
         {/* Network Warning */}
         {!isAvalancheNetwork && (
-          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded">
-            <div className="text-sm text-destructive font-medium mb-2">
-              Wrong Network Detected
-            </div>
-            <div className="text-xs text-muted-foreground mb-3">
-              Please switch to Avalanche network to use the trading features
-            </div>
-            <Button
-              onClick={handleSwitchNetwork}
-              disabled={isLoading}
-              variant="destructive"
-              size="sm"
-              className="w-full"
-            >
-              {isLoading ? "Switching..." : "Switch to Avalanche"}
-            </Button>
-          </div>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <div className="space-y-2">
+                <div className="font-medium">Wrong Network Detected</div>
+                <div className="text-sm">
+                  Please switch to Avalanche network to use the trading features
+                </div>
+                <Button
+                  onClick={handleSwitchNetwork}
+                  disabled={isLoading}
+                  variant="destructive"
+                  size="sm"
+                  className="w-full mt-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                      Switching...
+                    </>
+                  ) : (
+                    "Switch to Avalanche"
+                  )}
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Balances */}
@@ -188,19 +243,19 @@ const WalletConnection: React.FC = () => {
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">AVAX Balance</span>
               <span className="text-foreground font-semibold">
-                {avaxBalance.toFixed(4)} AVAX
+                {formatBalance(avaxBalance)} AVAX
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">USDT Balance</span>
               <span className="text-foreground font-semibold">
-                ${usdtBalance.toFixed(2)}
+                ${formatBalance(usdtBalance, 2)}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-border">
               <span className="text-muted-foreground">Portfolio Value</span>
               <span className="text-foreground font-bold">
-                ${(avaxBalance * 23.07 + usdtBalance).toFixed(2)}
+                ${formatBalance(avaxBalance * 25 + usdtBalance, 2)}
               </span>
             </div>
           </div>
@@ -214,6 +269,7 @@ const WalletConnection: React.FC = () => {
             variant="outline"
             size="sm"
           >
+            <RefreshCw className="w-3 h-3 mr-1" />
             Refresh
           </Button>
           <Button

@@ -197,20 +197,26 @@ export const PortfolioSummary: React.FC = () => {
                 {/* Holdings */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Current Holdings</h3>
-                  {balances && Object.entries(balances).map(([token, balance]) => (
+                  {portfolioMetrics.holdings && Object.entries(portfolioMetrics.holdings).map(([token, holding]: [string, any]) => (
                     <div key={token} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{token}</p>
                         <p className="text-sm text-muted-foreground">
-                          {balance.toFixed(4)} {token}
+                          {holding.amount.toFixed(2)} {token}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Avg: ${holding.avgPrice.toFixed(2)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
-                          {formatCurrency(balance * (token === 'AVAX' ? avaxPriceUSDT : 1))}
+                          {formatCurrency(holding.value)}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {((balance * (token === 'AVAX' ? avaxPriceUSDT : 1)) / portfolioMetrics.totalValue * 100).toFixed(1)}%
+                          {(holding.allocation * 100).toFixed(1)}%
+                        </p>
+                        <p className={cn("text-xs", holding.performance >= 0 ? "text-green-600" : "text-red-600")}>
+                          {holding.performance >= 0 ? '+' : ''}{(holding.performance * 100).toFixed(2)}%
                         </p>
                       </div>
                     </div>

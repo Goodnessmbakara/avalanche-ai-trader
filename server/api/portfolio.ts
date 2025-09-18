@@ -54,7 +54,7 @@ const mockPortfolioHoldings = {
 // Mock Trading History
 const generateMockTradingHistory = () => {
   const history = [];
-  const baseDate = new Date('2025-07-01'); // Start from July 2025
+  const baseDate = new Date('2025-05-01'); // Start from May 2025
   const basePrice = 20.0;
   
   for (let i = 0; i < 90; i++) {
@@ -96,7 +96,7 @@ const generateMockTradingHistory = () => {
 // Mock Portfolio Performance History
 const generateMockPerformanceHistory = () => {
   const history = [];
-  const baseDate = new Date('2025-07-01'); // Start from July 2025
+  const baseDate = new Date('2025-05-01'); // Start from May 2025
   let baseValue = 45000;
   
   for (let i = 0; i < 90; i++) {

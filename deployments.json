@@ -3,19 +3,22 @@
     "network": "fuji",
     "contracts": {
       "PriceOracle": {
-        "address": "",
-        "transactionHash": "",
+        "address": "0xD3704B79AdA9369FbF7bF82EbBdDe1c9A5fF2ec9",
+        "transactionHash": "0x3641cc9ed9c68696937011eb9504f2eaf1b89ae1437704f1e6927f832c4ed770",
         "blockNumber": 0,
         "constructorArgs": []
       },
       "AIPoweredTrader": {
-        "address": "",
-        "transactionHash": "",
+        "address": "0xCB75813Fb02C4148F3553C392C8caD9875F704E4",
+        "transactionHash": "0x447aa3355c7053369226b3a2a566d529a497f656d299ac403239fd601e4dba6d",
         "blockNumber": 0,
-        "constructorArgs": []
+        "constructorArgs": [
+          "0x2D99ABD9008Dc933ff5c0CD271B88309593aB921",
+          "0xD3704B79AdA9369FbF7bF82EbBdDe1c9A5fF2ec9"
+        ]
       }
     },
-    "deployedAt": ""
+    "deployedAt": "2025-09-18T11:54:40.637Z"
   },
   "avalanche": {
     "network": "avalanche",
